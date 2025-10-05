@@ -4154,68 +4154,63 @@ scriptsTab:AddParagraph({"Informação:", "vc vai começa a escrevet"})
 
 local Tab = Window:MakeTab({"Ops", "rbxassetid://6031280882"})
 
--- Serviços
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RemoteFolder = ReplicatedStorage:WaitForChild("RE")
 
--- 🔧 FireX
-local giveToolsFireX = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools")
-local fireX = giveToolsFireX:FindFirstChild("FireX")
-if not fireX then warn("FireX não encontrada!") end
-local fireXClick, fireXPrompt = fireX and fireX:FindFirstChildOfClass("ClickDetector"), fireX and fireX:FindFirstChildOfClass("ProximityPrompt")
+local fireX = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools"):FindFirstChild("FireX")
+local fireXClick = fireX and fireX:FindFirstChildOfClass("ClickDetector")
+local fireXPrompt = fireX and fireX:FindFirstChildOfClass("ProximityPrompt")
 local fireXEnabled = false
 local fireXWeld = nil
 local fireXArgs = { [1] = "FireX", [2] = "On" }
 
-local function grudarFireX()
-	if not fireXWeld and fireX then
-		hrp.CFrame = fireX.CFrame + Vector3.new(0,2,0)
-		fireXWeld = Instance.new("WeldConstraint")
-		fireXWeld.Part0 = hrp
-		fireXWeld.Part1 = fireX
-		fireXWeld.Parent = hrp
-	end
-end
-
-local function desgrudarFireX()
-	if fireXWeld then
-		fireXWeld:Destroy()
-		fireXWeld = nil
-	end
-end
-
--- 🔧 Laptop
-local giveToolsLaptop = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools")
-local laptop = giveToolsLaptop:FindFirstChild("Laptop")
-if not laptop then warn("Laptop não encontrado!") end
-local laptopClick, laptopPrompt = laptop and laptop:FindFirstChildOfClass("ClickDetector"), laptop and laptop:FindFirstChildOfClass("ProximityPrompt")
+local laptop = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools"):FindFirstChild("Laptop")
+local laptopClick = laptop and laptop:FindFirstChildOfClass("ClickDetector")
+local laptopPrompt = laptop and laptop:FindFirstChildOfClass("ProximityPrompt")
 local laptopEnabled = false
 local laptopWeld = nil
 
-local function grudarLaptop()
-	if not laptopWeld and laptop then
-		hrp.CFrame = laptop.CFrame + Vector3.new(0,2,0)
-		laptopWeld = Instance.new("WeldConstraint")
-		laptopWeld.Part0 = hrp
-		laptopWeld.Part1 = laptop
-		laptopWeld.Parent = hrp
+local vehiclesFolder = workspace:WaitForChild("Vehicles")
+local isActiveVehicle = false
+local selectedPlayerName = nil
+
+local function grudar(part, weldRef)
+	if not weldRef and part then
+		hrp.CFrame = part.CFrame + Vector3.new(0, 2, 0)
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = hrp
+		weld.Part1 = part
+		weld.Parent = hrp
+		return weld
 	end
 end
 
-local function desgrudarLaptop()
-	if laptopWeld then
-		laptopWeld:Destroy()
-		laptopWeld = nil
+local function desgrudar(weldRef)
+	if weldRef then
+		weldRef:Destroy()
+		weldRef = nil
 	end
+	return nil
 end
 
--- 🔁 Loop ultra rápido para os dois
+local function getMyVehicleSeat()
+	for _, vehicle in pairs(vehiclesFolder:GetChildren()) do
+		if string.find(vehicle.Name, LocalPlayer.Name) then
+			return vehicle:FindFirstChildWhichIsA("VehicleSeat", true)
+		end
+	end
+	return nil
+end
+
 task.spawn(function()
 	while true do
-		if fireXEnabled then
-			grudarFireX()
+		if fireXEnabled and fireX then
+			if not fireXWeld then fireXWeld = grudar(fireX, fireXWeld) end
 			if fireXClick then
 				fireclickdetector(fireXClick)
 			elseif fireXPrompt then
@@ -4224,22 +4219,19 @@ task.spawn(function()
 				firetouchinterest(hrp, fireX, 0)
 				firetouchinterest(hrp, fireX, 1)
 			end
-			-- FireServer
 			local remote
 			if LocalPlayer.Character then
 				local tool = LocalPlayer.Character:FindFirstChild("FireX")
-				if tool then
-					remote = tool:FindFirstChild("ToolSound")
-				end
+				if tool then remote = tool:FindFirstChild("ToolSound") end
 			end
 			if remote and remote.FireServer then
 				pcall(function() remote:FireServer(table.unpack(fireXArgs)) end)
 			end
 		end
 
-		if laptopEnabled then
-			grudarLaptop()
-			for i=1,8 do
+		if laptopEnabled and laptop then
+			if not laptopWeld then laptopWeld = grudar(laptop, laptopWeld) end
+			for i = 1, 8 do
 				if laptopClick then
 					fireclickdetector(laptopClick)
 				elseif laptopPrompt then
@@ -4251,29 +4243,141 @@ task.spawn(function()
 			end
 		end
 
+		if isActiveVehicle and selectedPlayerName then
+			local targetPlayer = Players:FindFirstChild(selectedPlayerName)
+			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				local seat = getMyVehicleSeat()
+				if seat then
+					seat.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+				end
+			end
+		end
+
 		task.wait(0.01)
 	end
 end)
 
--- 🔘 Toggles
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then return end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if fireXEnabled and fireXClick then fireclickdetector(fireXClick) end
+		if laptopEnabled and laptopClick then fireclickdetector(laptopClick) end
+	end
+end)
+
 Tab:AddToggle({
-	Name = "Lag extintor [ N sei se funciona}",
+	Name = "🔥 FireX Auto",
 	Default = false,
 	Callback = function(state)
 		fireXEnabled = state
 		if not state then
-			desgrudarFireX()
+			fireXWeld = desgrudar(fireXWeld)
 		end
 	end
 })
 
 Tab:AddToggle({
-	Name = "Lag Laptop",
+	Name = "💻 Lag Laptop",
 	Default = false,
 	Callback = function(state)
 		laptopEnabled = state
 		if not state then
-			desgrudarLaptop()
+			laptopWeld = desgrudar(laptopWeld)
+		end
+	end
+})
+
+local function getPlayerList()
+	local PlayerNames = {}
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Name ~= LocalPlayer.Name then
+			table.insert(PlayerNames, player.Name)
+		end
+	end
+	return PlayerNames
+end
+
+local killDropdown = Tab:AddDropdown({
+	Name = "Selecionar Jogador",
+	Options = getPlayerList(),
+	Default = "",
+	Callback = function(value)
+		selectedPlayerName = value
+		getgenv().Target = value
+	end
+})
+
+local function UpdateDropdown()
+	local tablePlayers = Players:GetPlayers()
+	local newPlayers = {}
+	if killDropdown then
+		for _, player in ipairs(tablePlayers) do
+			if player.Name ~= LocalPlayer.Name then
+				table.insert(newPlayers, player.Name)
+			end
+		end
+		killDropdown:Set(newPlayers)
+		selectedPlayerName = nil
+		getgenv().Target = nil
+		killDropdown:SetValue("")
+	end
+end
+
+Players.PlayerAdded:Connect(UpdateDropdown)
+Players.PlayerRemoving:Connect(UpdateDropdown)
+
+Tab:AddButton({
+	Name = "Atualizar Player List",
+	Callback = function()
+		UpdateDropdown()
+	end
+})
+
+Tab:AddToggle({
+	Name = "Auto VehicleSeat",
+	Default = false,
+	Callback = function(state)
+		isActiveVehicle = state
+	end
+})
+
+local selectedRemoteName = nil
+
+local RemoteList = {
+	["SchoolBus"] = {"1Ca1r", {"PickingCar", "SchoolBus"}},
+	["Van"] = {"1Ca1r", {"PickingCar", "Van"}},
+	["Semi"] = {"1Ca1r", {"PickingCar", "Semi"}},
+	["RV"] = {"1Ca1r", {"PickingCar", "RV"}},
+	["Snowplow"] = {"1Ca1r", {"PickingCar", "Snowplow"}}
+}
+
+local remoteOptions = {}
+for name, _ in pairs(RemoteList) do
+	table.insert(remoteOptions, name)
+end
+
+local remoteDropdown = Tab:AddDropdown({
+	Name = "Selecionar Remote",
+	Options = remoteOptions,
+	Default = "",
+	Callback = function(value)
+		selectedRemoteName = value
+	end
+})
+
+Tab:AddButton({
+	Name = "Ativar Remote",
+	Callback = function()
+		if selectedRemoteName then
+			local remoteData = RemoteList[selectedRemoteName]
+			if remoteData then
+				local remoteName = remoteData[1]
+				local args = remoteData[2]
+				local remote = RemoteFolder:FindFirstChild(remoteName)
+				if remote then
+					remote:FireServer(unpack(args))
+				end
+			end
 		end
 	end
 })
