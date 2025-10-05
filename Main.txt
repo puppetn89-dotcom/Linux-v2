@@ -1,0 +1,4221 @@
+local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/ShadowsHubseila/Linux-Hub-UI/refs/heads/main/Redzhubui%20(1).txt"))()
+
+local Window = redzlib:MakeWindow({
+  Title = "Linux Hub V2",
+  SubTitle = "Criado Por Shadow/Henrique",
+  SaveFolder = "ShadowsHub_Brookhaven"
+})
+
+Window:AddMinimizeButton({
+    Button = { Image = "rbxassetid://91276493949227", BackgroundTransparency = 0 },
+    Corner = { CornerRadius = UDim.new(35, 1) },
+})
+
+
+local infoTab = Window:MakeTab({"informações", "info"})
+
+infoTab:AddDiscordInvite({
+    Name = "Linux Hub",
+    Description = "Entre No Discord",
+    Logo = "rbxassetid://111047667311481",
+    Invite = "https://discord.gg/eP55xHGy",
+})
+infoTab:AddSection({ "Informações do Script" })
+infoTab:AddParagraph({ "Meu Roblox: Linuxtrolldev" })
+infoTab:AddParagraph({ "Colaboração:", "Shad0ws Hub" })
+infoTab:AddParagraph({ "Você está usando:", "Linux hub" })
+
+
+infoTab:AddSection({ "Informações" })
+
+--=== UTIL (cria "botões" não clicáveis e função segura de update) ===--
+local function createInfoBlock(tab, title, initial)
+	-- Tenta usar Paragraph (título + descrição, igual na imagem).
+	local block
+	local ok = pcall(function()
+		block = tab:AddParagraph({ Title = title, Content = initial })
+	end)
+	-- Se a lib não tiver Paragraph, cai para Label (1 linha).
+	if not ok or not block then
+		ok = pcall(function()
+			block = tab:AddLabel(title .. (initial and ("\n" .. initial) or ""))
+		end)
+	end
+	return block
+end
+
+local function setBlockText(block, title, text)
+	if not block then return end
+	-- Tenta métodos comuns de libs de UI
+	local ok = pcall(function()
+		if block.Set then return block:Set(text) end
+		if block.SetDesc then return block:SetDesc(text) end
+		if block.SetText then return block:SetText(text) end
+		if block.Update then return block:Update(text) end
+		if block.Refresh then return block:Refresh(text) end
+	end)
+	-- Fallback para Label simples (reescreve tudo)
+	if not ok then
+		pcall(function()
+			if block.Text ~= nil then
+				block.Text = title .. "\n" .. text
+			end
+		end)
+	end
+end
+
+-- Função para pegar a data atual
+local function getCurrentDate()
+	local currentTime = os.time()
+	return os.date("%d/%m/%Y", currentTime)
+end
+--====================================================================--
+
+-- Pega informações da conta do jogador
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+-- Bloquinhos não clicáveis (todos NA ABA TROLL) - Boas-vindas PRIMEIRO
+local welcomeBlock = createInfoBlock(TrollTab, "Seja Bem Vindo Ao Linux Hoje É Dia: ", getCurrentDate())
+
+-- Botão não clicável com nome da conta
+infoTab:AddParagraph({"Seu Nickname: " .. (game.Players.LocalPlayer.Name or "Desconhecido")})
+
+-- Botão não clicável com ID da conta  
+infoTab:AddParagraph({"Seu ID: " .. tostring(game.Players.LocalPlayer.UserId or 0)})
+
+-- Resto dos blocos
+local gameBlock    = createInfoBlock(infoTab, "Seu Jogo: ", "Carregando...")
+local timerBlock   = createInfoBlock(infoTab, "Tempo De Uso Do Script: ", "00:00:00")
+local fpsBlock     = createInfoBlock(infoTab, "Seu Fps: ", "FPS: 0")
+local playersBlock = createInfoBlock(infoTab, "Quantidade De Pessoas No Server: ", tostring(#game:GetService("Players"):GetPlayers()))
+
+-- Serviços
+local RunService = game:GetService("RunService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+-- Cronômetro (começa quando o Hub abre)
+local startClock = os.clock()
+
+-- FPS (cálculo suave por frame)
+local currentFPS = 0
+RunService.RenderStepped:Connect(function(dt)
+	currentFPS = math.floor(1/dt + 0.5)
+end)
+
+-- Pega nome do jogo atual
+local function getCurrentGameName()
+	local success, gameInfo = pcall(function()
+		return MarketplaceService:GetProductInfo(game.PlaceId)
+	end)
+	if success and gameInfo and gameInfo.Name then
+		return gameInfo.Name
+	else
+		return "Jogo Desconhecido"
+	end
+end
+
+-- Atualizações periódicas (meio segundo)
+task.spawn(function()
+	while true do
+		task.wait(0.5)
+
+		-- Atualiza data de boas-vindas
+		setBlockText(welcomeBlock, "Seja Bem Vindo Ao Shad0ws Hoje É Dia: ", getCurrentDate())
+
+		-- Tempo de uso
+		local e = os.clock() - startClock
+		local h = math.floor(e/3600)
+		local m = math.floor((e%3600)/60)
+		local s = math.floor(e%60)
+		setBlockText(timerBlock, "Tempo De Uso Do Script: ", string.format("%02d:%02d:%02d", h, m, s))
+
+		-- FPS
+		setBlockText(fpsBlock, "Seu Fps: ", "FPS: " .. tostring(currentFPS))
+
+		-- Players (reforça o valor mesmo sem eventos)
+		setBlockText(playersBlock, "Quantidade De Pessoas No Server", tostring(#Players:GetPlayers()))
+
+		-- Nome do jogo atual
+		setBlockText(gameBlock, "Seu Jogo :", getCurrentGameName())
+	end
+end)
+
+-- Atualiza players ao entrar/sair alguém
+local function refreshPlayers()
+	setBlockText(playersBlock, "Quantidade De Pessoas No Server: ", tostring(#Players:GetPlayers()))
+end
+Players.PlayerAdded:Connect(refreshPlayers)
+Players.PlayerRemoving:Connect(refreshPlayers)
+
+infoTab:AddParagraph({"Seu Executor: " .. identifyexecutor()})
+
+local CarTab = Window:MakeTab({"Veiculo", "car"})
+
+CarTab:AddSection({ "Spawnar Carros Premium & Vip" })
+CarTab:AddDropdown({
+    Name = "Selecionar Carro",
+    Description = "Escolha qual carro spawnar",
+    Default = "4DoorJeep",
+    Options = {"4DoorJeep", "Continental", "Buggy", "Benz", "BatMobile", "Bugatti", "CyberTruck", "Escalade", "Formula1", "Ferrari", "RollsRoyce", "Roadster", "RaptorMonster", "NascarPremium", "Limo", "Lamboego", "HummerLimo", "HalloweenPurpleCar", "Hummer", "HalloweenGreenTruck", "HalloweenBatMobile", "GoKartVPass", "Skyline", "SWAT", "RollsSUV", "CopLamborgini", "SuperCar", "TankPremium"},
+    Callback = function(Value)
+        _G.carroSelecionado = Value
+        print("Carro selecionado: " .. Value)
+    end
+})
+
+-- Botão para spawnar o carro selecionado
+CarTab:AddButton({
+    Name = "Spawnar Carro Selecionado",
+    Description = "Executa todas as interações para spawnar o carro escolhido",
+    Callback = function()
+        -- Script Compacto - Executa todas as interações
+        -- Créditos ao SimpleSpy (exx#9394)
+
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local carroEscolhido = _G.carroSelecionado or "4DoorJeep"
+
+        -- 1 - Abrir HUD do veículo
+        ReplicatedStorage.Remotes.TelemetryClientInteraction:FireServer(
+            "uiInteraction",
+            {["buttonName"] = "VehicleHudButton"}
+        )
+
+        -- 2 - Clicar no filtro (selecionar carro)
+        ReplicatedStorage.Remotes.TelemetryClientInteraction:FireServer(
+            "filterClick",
+            {["name"] = carroEscolhido, ["itemType"] = "Vehicles"}
+        )
+
+        -- 3 - Contexto de Upsell (premium car)
+        ReplicatedStorage.Remotes.TelemetryClientInteraction:FireServer(
+            "contextualUpsell",
+            {
+                ["adType"] = "Portal",
+                ["itemId"] = carroEscolhido,
+                ["gamepass"] = 0,
+                ["portalAdFill"] = "Portal",
+                ["reason"] = "premium car"
+            }
+        )
+
+        -- 4 - PickingCar (spawnar carro)
+        ReplicatedStorage.RE:FindFirstChild("1Ca1r"):FireServer(
+            "PickingCar",
+            carroEscolhido
+        )
+
+        -- 5 - Aplicar estado ao veículo (apenas para carros específicos)
+        if carroEscolhido == "4DoorJeep" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "4DoorJeep-4da8d83b-112f-43e6-bdb0-46ce9f638a65",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=6409728408",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "TankPremium" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "TankPremium-18f6122a-5c9b-431c-a9c2-410a20d36b28",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2.1
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "CopLamborgini" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "CopLamborgini-0abfd150-90fd-4f35-956c-d11873f48da0",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "rbxassetid://6409032379",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2.4
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "RollsSUV" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "RollsSUV-a96a08fc-9d1f-4abe-9473-d69a6a99b652",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=6409032379",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2.7
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "HummerLimo" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "HummerLimo-8d49d908-b687-4ab2-8c3d-b17c96383458",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=6409032379",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2.7
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "HalloweenPurpleCar" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "HalloweenPurpleCar-c6b5482a-f03c-4ff7-a384-0b5a4032be14",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=6409032379",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "Hummer" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "Hummer-d02f343a-1d6e-4274-9b34-1cad00c5cb34",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=6471657544",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "HalloweenGreenTruck" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "HalloweenGreenTruck-2fec9cb0-efeb-4617-8d9c-d93793412fa3",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=4625492000",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "GoKartVPass" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "GoKartVPass-0d18cef1-499f-4b76-aed3-7aef2d839c03",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "rbxassetid://16550212844",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 1.6
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "RollsRoyce" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "RollsRoyce-37857b4f-96ab-4d06-8b94-ba2d6a0896e6",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "rbxassetid://12424328898",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2.1
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "Formula1" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "Formula1-c586171c-e6fa-4a0f-8357-df9b9052cf9f",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=4504219366",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "Escalade" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "Escalade-b74be8db-2635-4495-9066-823402be7d3d",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=6409032379",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "CyberTruck" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "CyberTruck-045d6c3a-8261-4bb5-a8e3-5d52b85c1b0c",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=6409745580",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        elseif carroEscolhido == "Bugatti" then
+            ReplicatedStorage.Remotes.ApplyStateToVehicle:InvokeServer(
+                "Bugatti-b95d1391-2e66-4cfd-9802-d8089e3d192f",
+                {
+                    ["Lights"] = {
+                        ["lightsOn"] = false,
+                        ["hazardsActive"] = false
+                    },
+                    ["IsLocked"] = false,
+                    ["Appearance"] = {
+                        ["IsSmoking"] = false,
+                        ["WheelDecal"] = "http://www.roblox.com/asset/?id=6409032379",
+                        ["BabyCarSeatInstalledNumber"] = 0,
+                        ["Color"] = nil,
+                        ["IsOnFire"] = false,
+                        ["SuspensionHeight"] = 2.1
+                    },
+                    ["Performance"] = {
+                        ["DriftStrength"] = 1,
+                        ["MaxSpeed"] = 25,
+                        ["Turbo"] = 0
+                    },
+                    ["Owner"] = player
+                }
+            )
+        end
+        
+        print("Carro " .. carroEscolhido .. " spawnado com sucesso!")
+    end
+})
+
+-- Variáveis de controle para cada spam
+local spammingHeadLights = false
+local spammingHazardLights = false
+local spammingHorn = false
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Função de spam para HeadLights
+local function spamHeadLights()
+    while spammingHeadLights do
+        ReplicatedStorage.Remotes.ToggleHeadLights:InvokeServer()
+        wait(0.1)
+    end
+end
+
+-- Função de spam para HazardLights
+local function spamHazardLights()
+    while spammingHazardLights do
+        ReplicatedStorage.Remotes.ToggleHazardLights:InvokeServer()
+        wait(0.1)
+    end
+end
+
+-- Função de spam para PlayHorn
+local function spamPlayHorn()
+    while spammingHorn do
+        ReplicatedStorage.Remotes.PlayHorn:InvokeServer()
+        wait(0.1)
+    end
+end
+
+
+CarTab:AddSection({ "Spams" })
+-- Toggle para HeadLights
+CarTab:AddToggle({
+    Name = "Spam HeadLights",
+    Default = false,
+    Callback = function(value)
+        spammingHeadLights = value
+        if spammingHeadLights then
+            spawn(spamHeadLights)
+        else
+            -- Para o spam e clica uma vez para desativar
+            wait(0.2) -- Aguarda um pouco para garantir que o loop parou
+            ReplicatedStorage.Remotes.ToggleHeadLights:InvokeServer()
+        end
+    end
+})
+
+-- Toggle para HazardLights
+CarTab:AddToggle({
+    Name = "Spam HazardLights",
+    Default = false,
+    Callback = function(value)
+        spammingHazardLights = value
+        if spammingHazardLights then
+            spawn(spamHazardLights)
+        else
+            -- Para o spam e clica uma vez para desativar
+            wait(0.2) -- Aguarda um pouco para garantir que o loop parou
+            ReplicatedStorage.Remotes.ToggleHazardLights:InvokeServer()
+        end
+    end
+})
+
+-- Toggle para PlayHorn
+CarTab:AddToggle({
+    Name = "Spam Horn",
+    Default = false,
+    Callback = function(value)
+        spammingHorn = value
+        if spammingHorn then
+            spawn(spamPlayHorn)
+        else
+            -- Para a buzina imediatamente quando desativado
+            ReplicatedStorage.Remotes.StopHorn:InvokeServer()
+        end
+    end
+})
+
+
+CarTab:AddSection({ "Speed Car & Turbo" })
+
+local speedValue = 200  -- Valor padrão da velocidade
+local turboValue = 11.3  -- Valor padrão do turbo
+
+-- Função para encontrar todos os carros no workspace
+local function getAllCars()
+    local cars = {}
+    if workspace.Vehicles then
+        for _, vehicle in pairs(workspace.Vehicles:GetChildren()) do
+            if vehicle:FindFirstChild("Seats") and vehicle.Seats:FindFirstChild("VehicleSeat") then
+                table.insert(cars, vehicle)
+            end
+        end
+    end
+    return cars
+end
+
+-- Função para aplicar valores em todos os carros
+local function applyToAllCars(valueType, value)
+    local cars = getAllCars()
+    local carsModified = 0
+    
+    if #cars == 0 then
+        print(" Nenhum carro encontrado em workspace.Vehicles!")
+        return
+    end
+    
+    for _, vehicle in pairs(cars) do
+        local vehicleSeat = vehicle.Seats.VehicleSeat
+        print(" Verificando carro: " .. vehicle.Name)
+        
+        -- Listar todos os filhos do VehicleSeat para debug
+        print(" Objetos no VehicleSeat:")
+        for _, child in pairs(vehicleSeat:GetChildren()) do
+            print("  - " .. child.Name .. " (" .. child.ClassName .. ")")
+        end
+        
+        local targetObj = vehicleSeat:FindFirstChild(valueType)
+        
+        if targetObj then
+            print(" Encontrou " .. valueType .. " (" .. targetObj.ClassName .. ")")
+            
+            if targetObj:IsA("NumberValue") then
+                targetObj.Value = value
+                carsModified = carsModified + 1
+                print(" " .. valueType .. " (NumberValue) alterado para " .. value)
+            elseif targetObj:IsA("IntValue") then
+                targetObj.Value = value
+                carsModified = carsModified + 1
+                print(" " .. valueType .. " (IntValue) alterado para " .. value)
+            elseif targetObj:IsA("StringValue") then
+                targetObj.Value = tostring(value)
+                carsModified = carsModified + 1
+                print(" " .. valueType .. " (StringValue) alterado para " .. value)
+            else
+                print(" " .. valueType .. " é do tipo " .. targetObj.ClassName)
+                -- Tentar alterar diretamente
+                pcall(function()
+                    targetObj.Value = value
+                    carsModified = carsModified + 1
+                    print(" " .. valueType .. " alterado diretamente para " .. value)
+                end)
+            end
+        else
+            print(" " .. valueType .. " não encontrado no VehicleSeat")
+            
+            -- Tentar como propriedade direta do VehicleSeat
+            local success = pcall(function()
+                if valueType == "MaxSpeed" then
+                    vehicleSeat.MaxSpeed = value
+                elseif valueType == "Turbo" then
+                    vehicleSeat.Turbo = value
+                end
+                carsModified = carsModified + 1
+                print(" " .. valueType .. " (propriedade VehicleSeat) alterado para " .. value)
+            end)
+            
+            if not success then
+                print(" Falha ao alterar " .. valueType .. " como propriedade")
+            end
+        end
+    end
+    
+    print(" Total de carros modificados: " .. carsModified)
+end
+
+-- TextBox para Velocidade
+CarTab:AddTextBox({
+    Name = "Velocidade MaxSpeed",
+    Description = "Digite o valor da velocidade máxima",
+    PlaceholderText = "200",
+    Callback = function(Value)
+        local numValue = tonumber(Value)
+        if numValue then
+            speedValue = numValue
+            print(" Velocidade definida para: " .. speedValue)
+        else
+            print(" Erro: Digite apenas números para a velocidade")
+        end
+    end
+})
+
+-- TextBox para Turbo
+CarTab:AddTextBox({
+    Name = "Potência Turbo",
+    Description = "Digite o valor do turbo",
+    PlaceholderText = "11.3",
+    Callback = function(Value)
+        local numValue = tonumber(Value)
+        if numValue then
+            turboValue = numValue
+            print(" Turbo definido para: " .. turboValue)
+        else
+            print(" Erro: Digite apenas números para o turbo")
+        end
+    end
+})
+
+-- Botão para aplicar VELOCIDADE
+CarTab:AddButton({
+    Name = "Aplicar Velocidade",
+    Description = "Aplica a velocidade em todos os carros",
+    Callback = function()
+        print(" Aplicando velocidade " .. speedValue .. " em todos os carros...")
+        applyToAllCars("MaxSpeed", speedValue)
+    end
+})
+
+-- Botão para aplicar TURBO
+CarTab:AddButton({
+    Name = "Aplicar Turbo",
+    Description = "Aplica o turbo em todos os carros",
+    Callback = function()
+        print(" Aplicando turbo " .. turboValue .. " em todos os carros...")
+        applyToAllCars("Turbo", turboValue)
+    end
+})
+
+print(" CarTab Speed/Turbo Loaded! Configure e use os botões para aplicar.")
+
+CarTab:AddSection({ "Bring All Carros" })
+
+CarTab:AddButton({
+    Name = "Bring All Cars & Kill All",
+    Callback = function()
+        for _, v in next, workspace.Vehicles:GetChildren() do
+            v:SetPrimaryPartCFrame(game.Players.LocalPlayer.Character:GetPrimaryPartCFrame())
+        end
+    end
+})
+
+CarTab:AddParagraph({"Informação:", "Pega ou puxa todos carro até você"})
+
+CarTab:AddButton({
+    Name = "Kill All Cars",
+    Callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if not character or not character.PrimaryPart then return end
+        
+        -- Salva a posição original do jogador
+        local originalPosition = character.PrimaryPart.CFrame
+        
+        -- Posição de destino para destruir os carros
+        local killPosition = CFrame.new(-248, -156, -153)
+        
+        -- Pega todos os veículos
+        local vehicles = workspace.Vehicles:GetChildren()
+        
+        for _, vehicle in pairs(vehicles) do
+            if vehicle:IsA("Model") and vehicle.PrimaryPart then
+                
+                -- Verifica se há algum jogador sentado no carro
+                local hasPlayer = false
+                for _, part in pairs(vehicle:GetDescendants()) do
+                    if part:IsA("VehicleSeat") or part:IsA("Seat") then
+                        if part.Occupant then
+                            hasPlayer = true
+                            break
+                        end
+                    end
+                end
+                
+                -- Se não tiver ninguém sentado, processa o carro
+                if not hasPlayer then
+                    -- Teleporta o carro para a posição de kill
+                    vehicle:SetPrimaryPartCFrame(killPosition)
+                    
+                    -- Aguarda o carro ser processado/destruído
+                    wait(1)
+                    
+                    -- Volta para a posição original
+                    character:SetPrimaryPartCFrame(originalPosition)
+                    
+                    -- Aguarda antes de pegar o próximo carro
+                    wait(0.8)
+                end
+            end
+        end
+        
+        print("Todos os carros sem jogadores foram processados!")
+    end
+})
+
+CarTab:AddParagraph({"Informação:", "Apaga Todos os carros dos players recomendo usar 3 vez se o player estiver no carro não apaga"})
+
+-- Car RGB Section
+local RGBSection = CarTab:AddSection({"Car RGB"})
+
+CarTab:AddToggle({
+    Name = "Car RGB",
+    Default = false,
+    Callback = function(state)
+        isColorChanging = state
+        if isColorChanging then
+            colorChangeCoroutine = coroutine.create(changeCarColor)
+            coroutine.resume(colorChangeCoroutine)
+        end
+    end
+})
+
+CarTab:AddParagraph({"Note", "Ativando isso deixará seu carro RGB"})
+
+-- Fly Car Section
+local FlySection = CarTab:AddSection({"Fly Car"})
+
+CarTab:AddButton({
+    Name = "Fly Car",
+    Callback = function()
+-- Version: 4.1
+
+-- Instances:
+local Flymguiv2 = Instance.new("ScreenGui")
+local Drag = Instance.new("Frame")
+local FlyFrame = Instance.new("Frame")
+local ddnsfbfwewefe = Instance.new("TextButton")
+local Speed = Instance.new("TextBox")
+local Fly = Instance.new("TextButton")
+local Speeed = Instance.new("TextLabel")
+local Stat = Instance.new("TextLabel")
+local Stat2 = Instance.new("TextLabel")
+local Unfly = Instance.new("TextButton")
+local Vfly = Instance.new("TextLabel")
+local Close = Instance.new("TextButton")
+local Minimize = Instance.new("TextButton")
+local Flyon = Instance.new("Frame")
+local W = Instance.new("TextButton")
+local S = Instance.new("TextButton")
+
+--Properties:
+
+Flymguiv2.Name = "Car Fly gui v2"
+Flymguiv2.Parent = game.CoreGui
+Flymguiv2.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+Drag.Name = "Drag"
+Drag.Parent = Flymguiv2
+Drag.Active = true
+Drag.BackgroundColor3 = Color3.fromRGB(0, 150, 191)
+Drag.BorderSizePixel = 0
+Drag.Draggable = true
+Drag.Position = UDim2.new(0.482438415, 0, 0.454874992, 0)
+Drag.Size = UDim2.new(0, 237, 0, 27)
+
+FlyFrame.Name = "FlyFrame"
+FlyFrame.Parent = Drag
+FlyFrame.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+FlyFrame.BorderSizePixel = 0
+FlyFrame.Draggable = true
+FlyFrame.Position = UDim2.new(-0.00200000009, 0, 0.989000022, 0)
+FlyFrame.Size = UDim2.new(0, 237, 0, 139)
+
+ddnsfbfwewefe.Name = "ddnsfbfwewefe"
+ddnsfbfwewefe.Parent = FlyFrame
+ddnsfbfwewefe.BackgroundColor3 = Color3.fromRGB(0, 150, 191)
+ddnsfbfwewefe.BorderSizePixel = 0
+ddnsfbfwewefe.Position = UDim2.new(-0.000210968778, 0, -0.00395679474, 0)
+ddnsfbfwewefe.Size = UDim2.new(0, 237, 0, 27)
+ddnsfbfwewefe.Font = Enum.Font.SourceSans
+ddnsfbfwewefe.Text = ""
+ddnsfbfwewefe.TextColor3 = Color3.fromRGB(255, 255, 255)
+ddnsfbfwewefe.TextScaled = true
+ddnsfbfwewefe.TextSize = 14.000
+ddnsfbfwewefe.TextWrapped = true
+
+Speed.Name = "Speed"
+Speed.Parent = FlyFrame
+Speed.BackgroundColor3 = Color3.fromRGB(63, 63, 63)
+Speed.BorderColor3 = Color3.fromRGB(0, 0, 191)
+Speed.BorderSizePixel = 0
+Speed.Position = UDim2.new(0.445025861, 0, 0.402877688, 0)
+Speed.Size = UDim2.new(0, 111, 0, 33)
+Speed.Font = Enum.Font.SourceSans
+Speed.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
+Speed.Text = "50"
+Speed.TextColor3 = Color3.fromRGB(255, 255, 255)
+Speed.TextScaled = true
+Speed.TextSize = 14.000
+Speed.TextWrapped = true
+
+Fly.Name = "Fly"
+Fly.Parent = FlyFrame
+Fly.BackgroundColor3 = Color3.fromRGB(0, 150, 191)
+Fly.BorderSizePixel = 0
+Fly.Position = UDim2.new(0.0759493634, 0, 0.705797076, 0)
+Fly.Size = UDim2.new(0, 199, 0, 32)
+Fly.Font = Enum.Font.SourceSans
+Fly.Text = "Enable"
+Fly.TextColor3 = Color3.fromRGB(255, 255, 255)
+Fly.TextScaled = true
+Fly.TextSize = 14.000
+Fly.TextWrapped = true
+Fly.MouseButton1Click:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	Fly.Visible = false
+	Stat2.Text = "On"
+	Stat2.TextColor3 = Color3.fromRGB(0, 255, 0)
+	Unfly.Visible = true
+	Flyon.Visible = true
+	local BV = Instance.new("BodyVelocity",HumanoidRP)
+	local BG = Instance.new("BodyGyro",HumanoidRP)
+	BV.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+	game:GetService('RunService').RenderStepped:connect(function()
+	BG.MaxTorque = Vector3.new(math.huge,math.huge,math.huge)
+	BG.D = 5000
+	BG.P = 100000
+	BG.CFrame = game.Workspace.CurrentCamera.CFrame
+	end)
+end)
+
+Speeed.Name = "Speeed"
+Speeed.Parent = FlyFrame
+Speeed.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+Speeed.BorderSizePixel = 0
+Speeed.Position = UDim2.new(0.0759493634, 0, 0.402877688, 0)
+Speeed.Size = UDim2.new(0, 87, 0, 32)
+Speeed.ZIndex = 0
+Speeed.Font = Enum.Font.SourceSans
+Speeed.Text = "Speed:"
+Speeed.TextColor3 = Color3.fromRGB(255, 255, 255)
+Speeed.TextScaled = true
+Speeed.TextSize = 14.000
+Speeed.TextWrapped = true
+
+Stat.Name = "Stat"
+Stat.Parent = FlyFrame
+Stat.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+Stat.BorderSizePixel = 0
+Stat.Position = UDim2.new(0.299983799, 0, 0.239817441, 0)
+Stat.Size = UDim2.new(0, 85, 0, 15)
+Stat.Font = Enum.Font.SourceSans
+Stat.Text = "Status:"
+Stat.TextColor3 = Color3.fromRGB(255, 255, 255)
+Stat.TextScaled = true
+Stat.TextSize = 14.000
+Stat.TextWrapped = true
+
+Stat2.Name = "Stat2"
+Stat2.Parent = FlyFrame
+Stat2.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+Stat2.BorderSizePixel = 0
+Stat2.Position = UDim2.new(0.546535194, 0, 0.239817441, 0)
+Stat2.Size = UDim2.new(0, 27, 0, 15)
+Stat2.Font = Enum.Font.SourceSans
+Stat2.Text = "Off"
+Stat2.TextColor3 = Color3.fromRGB(255, 0, 0)
+Stat2.TextScaled = true
+Stat2.TextSize = 14.000
+Stat2.TextWrapped = true
+
+Unfly.Name = "Unfly"
+Unfly.Parent = FlyFrame
+Unfly.BackgroundColor3 = Color3.fromRGB(0, 150, 191)
+Unfly.BorderSizePixel = 0
+Unfly.Position = UDim2.new(0.0759493634, 0, 0.705797076, 0)
+Unfly.Size = UDim2.new(0, 199, 0, 32)
+Unfly.Visible = false
+Unfly.Font = Enum.Font.SourceSans
+Unfly.Text = "Disable"
+Unfly.TextColor3 = Color3.fromRGB(255, 255, 255)
+Unfly.TextScaled = true
+Unfly.TextSize = 14.000
+Unfly.TextWrapped = true
+Unfly.MouseButton1Click:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	Fly.Visible = true
+	Stat2.Text = "Off"
+	Stat2.TextColor3 = Color3.fromRGB(255, 0, 0)
+	wait()
+	Unfly.Visible = false
+	Flyon.Visible = false
+	HumanoidRP:FindFirstChildOfClass("BodyVelocity"):Destroy()
+	HumanoidRP:FindFirstChildOfClass("BodyGyro"):Destroy()
+end)
+
+Vfly.Name = "Vfly"
+Vfly.Parent = Drag
+Vfly.BackgroundColor3 = Color3.fromRGB(0, 150, 191)
+Vfly.BorderSizePixel = 0
+Vfly.Size = UDim2.new(0, 57, 0, 27)
+Vfly.Font = Enum.Font.SourceSans
+Vfly.Text = "Car fly"
+Vfly.TextColor3 = Color3.fromRGB(255, 255, 255)
+Vfly.TextScaled = true
+Vfly.TextSize = 14.000
+Vfly.TextWrapped = true
+
+Close.Name = "Close"
+Close.Parent = Drag
+Close.BackgroundColor3 = Color3.fromRGB(0, 150, 191)
+Close.BorderSizePixel = 0
+Close.Position = UDim2.new(0.875, 0, 0, 0)
+Close.Size = UDim2.new(0, 27, 0, 27)
+Close.Font = Enum.Font.SourceSans
+Close.Text = "X"
+Close.TextColor3 = Color3.fromRGB(255, 255, 255)
+Close.TextScaled = true
+Close.TextSize = 14.000
+Close.TextWrapped = true
+Close.MouseButton1Click:Connect(function()
+	Flymguiv2:Destroy()
+end)
+
+Minimize.Name = "Minimize"
+Minimize.Parent = Drag
+Minimize.BackgroundColor3 = Color3.fromRGB(0, 150, 191)
+Minimize.BorderSizePixel = 0
+Minimize.Position = UDim2.new(0.75, 0, 0, 0)
+Minimize.Size = UDim2.new(0, 27, 0, 27)
+Minimize.Font = Enum.Font.SourceSans
+Minimize.Text = "-"
+Minimize.TextColor3 = Color3.fromRGB(255, 255, 255)
+Minimize.TextScaled = true
+Minimize.TextSize = 14.000
+Minimize.TextWrapped = true
+function Mini()
+	if Minimize.Text == "-" then
+		Minimize.Text = "+"
+		FlyFrame.Visible = false
+	elseif Minimize.Text == "+" then
+		Minimize.Text = "-"
+		FlyFrame.Visible = true
+	end
+end
+Minimize.MouseButton1Click:Connect(Mini)
+
+Flyon.Name = "Fly on"
+Flyon.Parent = Flymguiv2
+Flyon.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Flyon.BorderSizePixel = 0
+Flyon.Position = UDim2.new(0.117647067, 0, 0.550284624, 0)
+Flyon.Size = UDim2.new(0.148000002, 0, 0.314999998, 0)
+Flyon.Visible = false
+Flyon.Active = true
+Flyon.Draggable = true
+
+W.Name = "W"
+W.Parent = Flyon
+W.BackgroundColor3 = Color3.fromRGB(0, 150, 191)
+W.BorderSizePixel = 0
+W.Position = UDim2.new(0.134719521, 0, 0.0152013302, 0)
+W.Size = UDim2.new(0.708999991, 0, 0.499000013, 0)
+W.Font = Enum.Font.SourceSans
+W.Text = "^"
+W.TextColor3 = Color3.fromRGB(255, 255, 255)
+W.TextScaled = true
+W.TextSize = 14.000
+W.TextWrapped = true
+W.TouchLongPress:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * 0
+end)
+
+W.MouseButton1Click:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * 0
+end)
+
+S.Name = "S"
+S.Parent = Flyon
+S.BackgroundColor3 = Color3.fromRGB(0, 150, 191)
+S.BorderSizePixel = 0
+S.Position = UDim2.new(0.134000003, 0, 0.479999989, 0)
+S.Rotation = 180.000
+S.Size = UDim2.new(0.708999991, 0, 0.499000013, 0)
+S.Font = Enum.Font.SourceSans
+S.Text = "^"
+S.TextColor3 = Color3.fromRGB(255, 255, 255)
+S.TextScaled = true
+S.TextSize = 14.000
+S.TextWrapped = true
+S.TouchLongPress:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * 0
+end)
+
+S.MouseButton1Click:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+	wait(.1)
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * 0
+end)
+    end
+})
+
+-- ========== PROTEÇÃO CONTRA RESET NO CARREGAMENTO ==========
+_G.hubCarregando = true
+_G.togglesInicializadas = {}
+
+spawn(function()
+    -- Espera o ReplicatedStorage estar pronto
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Remotes = ReplicatedStorage:WaitForChild("Remotes", 10)
+    
+    if Remotes then
+        local ResetRemote = Remotes:WaitForChild("ResetCharacterAppearance", 10)
+        
+        if ResetRemote then
+            -- Sobrescreve a função de reset
+            local ResetOriginal = ResetRemote.FireServer
+            ResetRemote.FireServer = function(...)
+                if _G.hubCarregando then
+                    return -- Bloqueia reset durante carregamento
+                end
+                return ResetOriginal(...)
+            end
+        end
+    end
+    
+    -- Libera após 3 segundos
+    wait(3)
+    _G.hubCarregando = false
+end)
+-- ============================================================
+
+local Tab = Window:MakeTab({"Avatar", "rbxassetid://10734952036"})
+
+Tab:AddSection({ Name = "Copiar Skin" })
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+
+local LocalPlayer = Players.LocalPlayer
+local selectedPlayerName = nil
+
+-- Função para obter os nomes dos jogadores (excluindo o jogador local)
+local function getPlayerList()
+    local PlayerNames = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Name ~= LocalPlayer.Name then
+            table.insert(PlayerNames, player.Name)
+        end
+    end
+    return PlayerNames
+end
+
+-- Dropdown de seleção de jogador
+local killDropdown = Tab:AddDropdown({
+    Name = "Selecionar Jogador",
+    Options = getPlayerList(),
+    Default = "", -- Estado inicial vazio (mostra "..." ou equivalente)
+    Callback = function(value)
+        selectedPlayerName = value
+        getgenv().Target = value
+        print("Jogador selecionado: " .. tostring(value))
+    end
+})
+
+-- Função para atualizar o dropdown
+local function UpdateDropdown()
+    local tablePlayers = Players:GetPlayers()
+    local newPlayers = {}
+    if killDropdown then
+        for _, player in ipairs(tablePlayers) do
+            if player.Name ~= LocalPlayer.Name then
+                table.insert(newPlayers, player.Name)
+            end
+        end
+        killDropdown:Set(newPlayers)
+        -- Sempre reseta a seleção ao atualizar
+        selectedPlayerName = nil
+        getgenv().Target = nil
+        killDropdown:SetValue("") -- Define o dropdown como vazio ("..." ou equivalente)
+        print("Lista de jogadores atualizada: ", table.concat(newPlayers, ", "))
+        if #newPlayers == 0 then
+            print("Nenhum jogador disponível (exceto você).")
+        end
+    else
+        print("Erro: Dropdown não encontrado.")
+    end
+end
+
+-- Atualiza o dropdown automaticamente quando jogadores entram ou saem
+Players.PlayerAdded:Connect(UpdateDropdown)
+Players.PlayerRemoving:Connect(UpdateDropdown)
+
+-- Botão para atualizar a lista de jogadores manualmente
+Tab:AddButton({
+    Name = "Atualizar Player List",
+    Callback = function()
+        local tablePlayers = Players:GetPlayers()
+        local newPlayers = {}
+        if killDropdown then
+            for _, player in ipairs(tablePlayers) do
+                if player.Name ~= LocalPlayer.Name then
+                    table.insert(newPlayers, player.Name)
+                end
+            end
+            killDropdown:Set(newPlayers)
+            selectedPlayerName = nil
+            getgenv().Target = nil
+            killDropdown:SetValue("") -- Define o dropdown como vazio ("..." ou equivalente)
+            print("Lista de jogadores atualizada manualmente: ", table.concat(newPlayers, ", "))
+            print("Seleção resetada ao atualizar a lista.")
+            if #newPlayers == 0 then
+                print("Nenhum jogador disponível (exceto você).")
+            end
+        else
+            print("Erro: Dropdown não encontrado.")
+        end
+    end
+})
+
+Tab:AddButton({
+    Name = "Copiar Avatar",
+    Callback = function()
+        if not Target then return end
+
+        local LP = Players.LocalPlayer
+        local LChar = LP.Character
+        local TPlayer = Players:FindFirstChild(Target)
+
+        if TPlayer and TPlayer.Character then
+            local LHumanoid = LChar and LChar:FindFirstChildOfClass("Humanoid")
+            local THumanoid = TPlayer.Character:FindFirstChildOfClass("Humanoid")
+
+            if LHumanoid and THumanoid then
+                -- RESETAR LOCALPLAYER
+                local LDesc = LHumanoid:GetAppliedDescription()
+
+                -- Remover acessÃ³rios, roupas e face atuais
+                for _, acc in ipairs(LDesc:GetAccessories(true)) do
+                    if acc.AssetId and tonumber(acc.AssetId) then
+                        Remotes.Wear:InvokeServer(tonumber(acc.AssetId))
+                        task.wait(0.2)
+                    end
+                end
+
+                if tonumber(LDesc.Shirt) then
+                    Remotes.Wear:InvokeServer(tonumber(LDesc.Shirt))
+                    task.wait(0.2)
+                end
+
+                if tonumber(LDesc.Pants) then
+                    Remotes.Wear:InvokeServer(tonumber(LDesc.Pants))
+                    task.wait(0.2)
+                end
+
+                if tonumber(LDesc.Face) then
+                    Remotes.Wear:InvokeServer(tonumber(LDesc.Face))
+                    task.wait(0.2)
+                end
+
+                -- COPIAR DO JOGADOR ALVO
+                local PDesc = THumanoid:GetAppliedDescription()
+
+                -- Enviar partes do corpo
+                local argsBody = {
+                    [1] = {
+                        [1] = PDesc.Torso,
+                        [2] = PDesc.RightArm,
+                        [3] = PDesc.LeftArm,
+                        [4] = PDesc.RightLeg,
+                        [5] = PDesc.LeftLeg,
+                        [6] = PDesc.Head
+                    }
+                }
+                Remotes.ChangeCharacterBody:InvokeServer(unpack(argsBody))
+                task.wait(0.5)
+
+                if tonumber(PDesc.Shirt) then
+                    Remotes.Wear:InvokeServer(tonumber(PDesc.Shirt))
+                    task.wait(0.3)
+                end
+
+                if tonumber(PDesc.Pants) then
+                    Remotes.Wear:InvokeServer(tonumber(PDesc.Pants))
+                    task.wait(0.3)
+                end
+
+                if tonumber(PDesc.Face) then
+                    Remotes.Wear:InvokeServer(tonumber(PDesc.Face))
+                    task.wait(0.3)
+                end
+
+                for _, v in ipairs(PDesc:GetAccessories(true)) do
+                    if v.AssetId and tonumber(v.AssetId) then
+                        Remotes.Wear:InvokeServer(tonumber(v.AssetId))
+                        task.wait(0.3)
+                    end
+                end
+
+                local SkinColor = TPlayer.Character:FindFirstChild("Body Colors")
+                if SkinColor then
+                    Remotes.ChangeBodyColor:FireServer(tostring(SkinColor.HeadColor))
+                    task.wait(0.3)
+                end
+
+                if tonumber(PDesc.IdleAnimation) then
+                    Remotes.Wear:InvokeServer(tonumber(PDesc.IdleAnimation))
+                    task.wait(0.3)
+                end
+
+                -- Nome, bio e cor
+                local Bag = TPlayer:FindFirstChild("PlayersBag")
+                if Bag then
+                    if Bag:FindFirstChild("RPName") and Bag.RPName.Value ~= "" then
+                        Remotes.RPNameText:FireServer("RolePlayName", Bag.RPName.Value)
+                        task.wait(0.3)
+                    end
+                    if Bag:FindFirstChild("RPBio") and Bag.RPBio.Value ~= "" then
+                        Remotes.RPNameText:FireServer("RolePlayBio", Bag.RPBio.Value)
+                        task.wait(0.3)
+                    end
+                    if Bag:FindFirstChild("RPNameColor") then
+                        Remotes.RPNameColor:FireServer("PickingRPNameColor", Bag.RPNameColor.Value)
+                        task.wait(0.3)
+                    end
+                    if Bag:FindFirstChild("RPBioColor") then
+                        Remotes.RPNameColor:FireServer("PickingRPBioColor", Bag.RPBioColor.Value)
+                        task.wait(0.3)
+                    end
+                end
+            end
+        end
+    end
+})
+
+Tab:AddSection({ "Partes do Corpo:" })
+
+-- Variáveis globais para armazenar partes selecionadas
+_G.selectedParts = {
+    Torso = nil,
+    BracoDireito = nil,
+    BracoEsquerdo = nil,
+    PernaDireita = nil,
+    PernaEsquerda = nil,
+    Cabeca = nil
+}
+
+-- TextBox para Torso
+Tab:AddTextBox({
+    Name = "Tronco",
+    Description = "ID do Tronco",
+    PlaceholderText = "Linux",
+    TextSize = 16,
+    FontSize = 16,
+    Callback = function(Value)
+        if Value == "" then
+            _G.selectedParts.Torso = nil
+            print("Tronco: vazio")
+        else
+            local id = tonumber(Value) or 0
+            _G.selectedParts.Torso = id
+            print("Tronco: " .. id)
+        end
+    end
+})
+
+-- TextBox para Right Arm  
+Tab:AddTextBox({
+    Name = "Braço Direito",
+    Description = "ID do Braço Direito",
+    PlaceholderText = "Linux",
+    TextSize = 16,
+    FontSize = 16,
+    Callback = function(Value)
+        if Value == "" then
+            _G.selectedParts.BracoDireito = nil
+            print("Braço Direito: vazio")
+        else
+            local id = tonumber(Value) or 0
+            _G.selectedParts.BracoDireito = id
+            print("Braço Direito: " .. id)
+        end
+    end
+})
+
+-- TextBox para Left Arm
+Tab:AddTextBox({
+    Name = "Braço Esquerdo",
+    Description = "ID do Braço Esquerdo",
+    PlaceholderText = "Linux",
+    TextSize = 16,
+    FontSize = 16,
+    Callback = function(Value)
+        if Value == "" then
+            _G.selectedParts.BracoEsquerdo = nil
+            print("Braço Esquerdo: vazio")
+        else
+            local id = tonumber(Value) or 0
+            _G.selectedParts.BracoEsquerdo = id
+            print("Braço Esquerdo: " .. id)
+        end
+    end
+})
+
+-- TextBox para Right Leg
+Tab:AddTextBox({
+    Name = "Perna Direita",
+    Description = "ID da Perna Direita",
+    PlaceholderText = "Linux",
+    TextSize = 16,
+    FontSize = 16,
+    Callback = function(Value)
+        if Value == "" then
+            _G.selectedParts.PernaDireita = nil
+            print("Perna Direita: vazio")
+        else
+            local id = tonumber(Value) or 0
+            _G.selectedParts.PernaDireita = id
+            print("Perna Direita: " .. id)
+        end
+    end
+})
+
+-- TextBox para Left Leg
+Tab:AddTextBox({
+    Name = "Perna Esquerda",
+    Description = "ID da Perna Esquerda",
+    PlaceholderText = "Linux",
+    TextSize = 16,
+    FontSize = 16,
+    Callback = function(Value)
+        if Value == "" then
+            _G.selectedParts.PernaEsquerda = nil
+            print("Perna Esquerda: vazio")
+        else
+            local id = tonumber(Value) or 0
+            _G.selectedParts.PernaEsquerda = id
+            print("Perna Esquerda: " .. id)
+        end
+    end
+})
+
+-- TextBox para Head
+Tab:AddTextBox({
+    Name = "Cabeça",
+    Description = "ID da Cabeça",
+    PlaceholderText = "Linux",
+    TextSize = 16,
+    FontSize = 16,
+    Callback = function(Value)
+        if Value == "" then
+            _G.selectedParts.Cabeca = nil
+            print("Cabeça: vazio")
+        else
+            local id = tonumber(Value) or 0
+            _G.selectedParts.Cabeca = id
+            print("Cabeça: " .. id)
+        end
+    end
+})
+
+Tab:AddSection({ "Carregar Partes:" })
+
+-- Variável para armazenar a parte selecionada no dropdown
+_G.parteSelecionada = "Tronco"
+
+-- Dropdown para selecionar qual parte carregar
+Tab:AddDropdown({
+    Name = "Selecionar Parte",
+    Description = "Escolha qual parte equipar",
+    Default = "Tronco",
+    Options = {"Tronco", "Braço Direito", "Braço Esquerdo", "Perna Direita", "Perna Esquerda", "Cabeça"},
+    Callback = function(Value)
+        _G.parteSelecionada = Value
+        print("Parte selecionada: " .. Value)
+    end
+})
+
+-- Botão para equipar a parte selecionada no dropdown
+Tab:AddButton({
+    Name = "Equipar Parte Selecionada",
+    Description = "Equipa apenas a parte escolhida no dropdown",
+    Callback = function()
+        local args = {
+            [1] = {
+                [1] = 0, -- Torso
+                [2] = 0, -- Right Arm
+                [3] = 0, -- Left Arm
+                [4] = 0, -- Right Leg
+                [5] = 0, -- Left Leg
+                [6] = 0  -- Head
+            }
+        }
+        
+        -- Define qual parte carregar baseado na seleção do dropdown
+        if _G.parteSelecionada == "Tronco" and _G.selectedParts.Torso then
+            args[1][1] = _G.selectedParts.Torso
+            print("Equipando Tronco: " .. _G.selectedParts.Torso)
+        elseif _G.parteSelecionada == "Braço Direito" and _G.selectedParts.BracoDireito then
+            args[1][2] = _G.selectedParts.BracoDireito
+            print("Equipando Braço Direito: " .. _G.selectedParts.BracoDireito)
+        elseif _G.parteSelecionada == "Braço Esquerdo" and _G.selectedParts.BracoEsquerdo then
+            args[1][3] = _G.selectedParts.BracoEsquerdo
+            print("Equipando Braço Esquerdo: " .. _G.selectedParts.BracoEsquerdo)
+        elseif _G.parteSelecionada == "Perna Direita" and _G.selectedParts.PernaDireita then
+            args[1][4] = _G.selectedParts.PernaDireita
+            print("Equipando Perna Direita: " .. _G.selectedParts.PernaDireita)
+        elseif _G.parteSelecionada == "Perna Esquerda" and _G.selectedParts.PernaEsquerda then
+            args[1][5] = _G.selectedParts.PernaEsquerda
+            print("Equipando Perna Esquerda: " .. _G.selectedParts.PernaEsquerda)
+        elseif _G.parteSelecionada == "Cabeça" and _G.selectedParts.Cabeca then
+            args[1][6] = _G.selectedParts.Cabeca
+            print("Equipando Cabeça: " .. _G.selectedParts.Cabeca)
+        else
+            print("Erro: " .. _G.parteSelecionada .. " está vazia! Digite um ID primeiro.")
+            return
+        end
+        
+        -- Executa o remote
+        pcall(function()
+            game:GetService("ReplicatedStorage").Remotes.ChangeCharacterBody:InvokeServer(unpack(args))
+        end)
+    end
+})
+
+-- Botão para carregar todas as partes de uma vez
+Tab:AddButton({
+    Name = "Carregar Todas as Partes",
+    Description = "Equipa todas as partes digitadas de uma vez",
+    Callback = function()
+        -- Verifica se pelo menos uma parte tem ID
+        local temAlgumaParteSelecionada = _G.selectedParts.Torso or _G.selectedParts.BracoDireito or 
+                                         _G.selectedParts.BracoEsquerdo or _G.selectedParts.PernaDireita or 
+                                         _G.selectedParts.PernaEsquerda or _G.selectedParts.Cabeca
+        
+        if not temAlgumaParteSelecionada then
+            print("Erro: Nenhuma parte foi selecionada! Digite pelo menos um ID.")
+            return
+        end
+        
+        local args = {
+            [1] = {
+                [1] = _G.selectedParts.Torso or 0,
+                [2] = _G.selectedParts.BracoDireito or 0,
+                [3] = _G.selectedParts.BracoEsquerdo or 0,
+                [4] = _G.selectedParts.PernaDireita or 0,
+                [5] = _G.selectedParts.PernaEsquerda or 0,
+                [6] = _G.selectedParts.Cabeca or 0
+            }
+        }
+        
+        print("Carregando partes selecionadas:")
+        if _G.selectedParts.Torso then print("Tronco: " .. _G.selectedParts.Torso) end
+        if _G.selectedParts.BracoDireito then print("Braço Direito: " .. _G.selectedParts.BracoDireito) end
+        if _G.selectedParts.BracoEsquerdo then print("Braço Esquerdo: " .. _G.selectedParts.BracoEsquerdo) end
+        if _G.selectedParts.PernaDireita then print("Perna Direita: " .. _G.selectedParts.PernaDireita) end
+        if _G.selectedParts.PernaEsquerda then print("Perna Esquerda: " .. _G.selectedParts.PernaEsquerda) end
+        if _G.selectedParts.Cabeca then print("Cabeça: " .. _G.selectedParts.Cabeca) end
+        
+        pcall(function()
+            game:GetService("ReplicatedStorage").Remotes.ChangeCharacterBody:InvokeServer(unpack(args))
+        end)
+    end
+})
+
+Tab:AddSection({ "Outros:" })
+
+-- Botão para Reset Character
+Tab:AddButton({
+    Name = "Resetar Personagem",
+    Description = "Reset completo do personagem",
+    Callback = function()
+        pcall(function()
+            game:GetService("ReplicatedStorage").Remotes.ResetCharacterAppearance:FireServer()
+        end)
+        print("Personagem resetado completamente!")
+    end
+})
+
+Tab:AddButton({
+    Name = "R6 FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ShadowsHubseila/R6-ANIMATION/refs/heads/main/R6%20brookhaven"))()
+    end
+})
+
+Tab:AddSection({ "FE:" })
+
+-- Dropdown para escolher a cor do fogo
+Tab:AddDropdown({
+    Name = "Fire Colors",
+    Description = "Select the <font color='rgb(255, 100, 100)'>Fire Color</font>",
+    Options = {"White", "Orange", "Green", "Blue", "Purple", "Black"},
+    Default = "White",
+    Flag = "fire_color_dropdown",
+    Callback = function(Value)
+        -- Tabela com as cores e seus respectivos IDs e códigos
+        local fireColors = {
+            ["White"] = {
+                id = "18637074370",
+                code = "030FireWhite"
+            },
+            ["Orange"] = {
+                id = "18637025451", 
+                code = "031FireOrange"
+            },
+            ["Green"] = {
+                id = "18637078598",
+                code = "032FireGreen"
+            },
+            ["Blue"] = {
+                id = "18637076370",
+                code = "033FireBlue"
+            },
+            ["Purple"] = {
+                id = "18637070174",
+                code = "034FirePurple"
+            },
+            ["Black"] = {
+                id = "18637072603",
+                code = "035FireBlack"
+            }
+        }
+        
+        -- Armazena globalmente a cor selecionada
+        _G.selectedColor = Value
+        print("Cor selecionada: " .. Value)
+    end
+})
+
+-- Botão para equipar a cor escolhida
+Tab:AddButton({
+    Name = "Equip Fire Color",
+    Callback = function()
+        -- Tabela com as cores e seus respectivos IDs e códigos
+        local fireColors = {
+            ["White"] = {
+                id = "18637074370",
+                code = "030FireWhite"
+            },
+            ["Orange"] = {
+                id = "18637025451", 
+                code = "031FireOrange"
+            },
+            ["Green"] = {
+                id = "18637078598",
+                code = "032FireGreen"
+            },
+            ["Blue"] = {
+                id = "18637076370",
+                code = "033FireBlue"
+            },
+            ["Purple"] = {
+                id = "18637070174",
+                code = "034FirePurple"
+            },
+            ["Black"] = {
+                id = "18637072603",
+                code = "035FireBlack"
+            }
+        }
+        
+        local selectedColor = _G.selectedColor or "White"
+        
+        if selectedColor and fireColors[selectedColor] then
+            local colorData = fireColors[selectedColor]
+            
+            local args = {
+                [1] = colorData.id,
+                [2] = colorData.code
+            }
+            
+            -- Aplica o emmiter com a cor selecionada
+            game:GetService("ReplicatedStorage").Remotes.ApplyEmmiter:InvokeServer(unpack(args))
+            
+            print("Equipado: " .. selectedColor .. " Fire")
+        else
+            warn("Erro: Cor não encontrada!")
+        end
+    end
+})
+
+-- Dropdown para escolher a cor do smoke
+Tab:AddDropdown({
+    Name = "Smoke Colors",
+    Description = "Select the <font color='rgb(150, 150, 150)'>Smoke Color</font>",
+    Options = {"White", "Yellow", "Orange", "Green", "Blue", "Purple", "Red", "Black"},
+    Default = "White",
+    Flag = "smoke_color_dropdown",
+    Callback = function(Value)
+        -- Tabela com as cores de smoke e seus respectivos IDs e códigos
+        local smokeColors = {
+            ["White"] = {
+                id = "18637791748",
+                code = "080SmokeWhite"
+            },
+            ["Yellow"] = {
+                id = "18637800482",
+                code = "081SmokeYellow"
+            },
+            ["Orange"] = {
+                id = "18637793920",
+                code = "082SmokeOrange"
+            },
+            ["Green"] = {
+                id = "18637789299",
+                code = "083SmokeGreen"
+            },
+            ["Blue"] = {
+                id = "18637803021",
+                code = "084SmokeBlue"
+            },
+            ["Purple"] = {
+                id = "18637813360",
+                code = "085SmokePurple"
+            },
+            ["Red"] = {
+                id = "18637796598",
+                code = "086SmokeRed"
+            },
+            ["Black"] = {
+                id = "18637798529",
+                code = "087SmokeBlack"
+            }
+        }
+        
+        -- Armazena globalmente a cor de smoke selecionada
+        _G.selectedSmokeColor = Value
+        print("Cor de smoke selecionada: " .. Value)
+    end
+})
+
+-- Botão para equipar a cor de smoke escolhida
+Tab:AddButton({
+    Name = "Equip Smoke Color",
+    Callback = function()
+        -- Tabela com as cores de smoke e seus respectivos IDs e códigos
+        local smokeColors = {
+            ["White"] = {
+                id = "18637791748",
+                code = "080SmokeWhite"
+            },
+            ["Yellow"] = {
+                id = "18637800482",
+                code = "081SmokeYellow"
+            },
+            ["Orange"] = {
+                id = "18637793920",
+                code = "082SmokeOrange"
+            },
+            ["Green"] = {
+                id = "18637789299",
+                code = "083SmokeGreen"
+            },
+            ["Blue"] = {
+                id = "18637803021",
+                code = "084SmokeBlue"
+            },
+            ["Purple"] = {
+                id = "18637813360",
+                code = "085SmokePurple"
+            },
+            ["Red"] = {
+                id = "18637796598",
+                code = "086SmokeRed"
+            },
+            ["Black"] = {
+                id = "18637798529",
+                code = "087SmokeBlack"
+            }
+        }
+        
+        local selectedSmokeColor = _G.selectedSmokeColor or "White"
+        
+        if selectedSmokeColor and smokeColors[selectedSmokeColor] then
+            local colorData = smokeColors[selectedSmokeColor]
+            
+            local args = {
+                [1] = colorData.id,
+                [2] = colorData.code
+            }
+            
+            -- Aplica o emmiter com a cor de smoke selecionada
+            game:GetService("ReplicatedStorage").Remotes.ApplyEmmiter:InvokeServer(unpack(args))
+            
+            print("Equipado: " .. selectedSmokeColor .. " Smoke")
+        else
+            warn("Erro: Cor de smoke não encontrada!")
+        end
+    end
+})
+
+-- Variável global para controlar primeira execução
+if not _G.togglesInicializadas then
+    _G.togglesInicializadas = {}
+end
+
+Tab:AddToggle({
+    Name = "Small",
+    Description = "",
+    Default = false,
+    Flag = "custom_body_toggle",
+    Callback = function(Value)
+        if not _G.togglesInicializadas["Small"] then
+            _G.togglesInicializadas["Small"] = true
+            return
+        end
+        
+        local customBody = {
+            [1] = 104157277410075,
+            [2] = 86280536086607,
+            [3] = 81974054542977,
+            [4] = 74524984742501,
+            [5] = 122626731952977,
+            [6] = 134082579
+        }
+        
+        if Value then
+            local args = {[1] = customBody}
+            game:GetService("ReplicatedStorage").Remotes.ChangeCharacterBody:InvokeServer(unpack(args))
+        else
+            game:GetService("ReplicatedStorage").Remotes.ResetCharacterAppearance:FireServer()
+        end
+    end
+})
+
+Tab:AddToggle({
+    Name = "Giant Avatar",
+    Description = "",
+    Default = false,
+    Flag = "custom_body_v2_toggle",
+    Callback = function(Value)
+        if not _G.togglesInicializadas["Giant"] then
+            _G.togglesInicializadas["Giant"] = true
+            return
+        end
+        
+        local customBodyV2 = {
+            [1] = 17713016036,
+            [2] = 17713016151,
+            [3] = 17713015861,
+            [4] = 17713021340,
+            [5] = 17713016191,
+            [6] = 6340213
+        }
+        
+        if Value then
+            local args = {[1] = customBodyV2}
+            game:GetService("ReplicatedStorage").Remotes.ChangeCharacterBody:InvokeServer(unpack(args))
+        else
+            game:GetService("ReplicatedStorage").Remotes.ResetCharacterAppearance:FireServer()
+        end
+    end
+})
+
+Tab:AddSection({ "Outros Efeitos (Fire & Smoke)" })
+
+-- Toggle para Loop Smoke Avatar
+Tab:AddToggle({
+    Name = "Loop Smoke",
+    Default = false,
+    Callback = function(Value)
+        -- Variável para controlar o loop de smoke
+        local isSmokeLoopActive = Value
+
+        if Value then
+            -- Inicia o loop quando ativado
+            spawn(function()
+                while isSmokeLoopActive do
+                    local mall = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_Mall"):WaitForChild("001_Pizza"):FindFirstChild("CatchFire")
+                    
+                    if mall then
+                        local touchInterest = mall:FindFirstChild("TouchInterest")
+                        if touchInterest then
+                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, mall, 0)
+                            wait()
+                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, mall, 1)
+                        end
+                    end
+                    wait(1)
+                end
+                print("Loop Smoke Avatar desativado!")
+            end)
+        else
+            print("Parando Loop Smoke Avatar...")
+        end
+    end
+})
+
+-- Toggle para Loop Fire Avatar
+Tab:AddToggle({
+    Name = "Loop Fire",
+    Description = "As Vezes Nao Pega So Pega Se Tiver Casa Com Churrasqueira",
+    Default = false,
+    Callback = function(Value)
+        -- Variável para controlar o loop de fire
+        local isFireLoopActive = Value
+
+        if Value then
+            -- Inicia o loop quando ativado
+            spawn(function()
+                while isFireLoopActive do
+                    local playerName = game.Players.LocalPlayer.Name
+                    local lotFolder = game:GetService("Workspace"):WaitForChild("001_Lots")
+                    local house = lotFolder:FindFirstChild(playerName .. "House")
+
+                    if house then
+                        local mall = house:WaitForChild("HousePickedByPlayer"):WaitForChild("HouseModel"):WaitForChild("001_BBQ"):FindFirstChild("CatchFire")
+                        if mall then
+                            local touchInterest = mall:FindFirstChild("TouchInterest")
+                            if touchInterest then
+                                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, mall, 0)
+                                wait()
+                                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, mall, 1)
+                            end
+                        end
+                    else
+                        warn("House not found for player: " .. playerName)
+                    end
+                    wait(1)
+                end
+                print("Loop Fire Avatar desativado!")
+            end)
+        else
+            print("Parando Loop Fire Avatar...")
+        end
+    end
+})
+
+Tab:AddSection({"Roupas 3D"})
+
+Tab:AddDropdown({
+    Name = "Acessórios 3D",
+    Description = "Selecione para equipar",
+    Default = nil,
+    Options = {
+        "La Vaca Saturno",
+        "brainrot",
+        "Galo",
+        "Capivara",
+        "Tigre",
+        "Capivara",
+        "Peixe",
+        "Pepino Doidao",
+        "Gato",
+        "Rato",
+        "Sei la KKKKOKK",
+        "Pato Banana",
+        "Fantasma",
+        "Gato Lasanha",
+        "Arvore",
+        "Gato Cupcake",
+        "Formiga",
+        "KKKKKKKK",
+        "Sherek Feiosa",
+        "Frango",
+        "Pinguin",
+        "rato",
+        "Minions",
+        "Dinossauro",
+        "Ovni",
+        "Passaro Gordo",
+        "Balao Cachorro",
+        "Urso Pelucia",
+        "Minecraft",
+        "Fofuxo",
+        "Sapo",
+        "Bruxo",
+        "Rato Grande",
+        "Burro",
+        "Nemo",
+        "Careca desenho KKKKK",
+        "Pinguin Mini",
+        "Mini Sherek",
+        "Coruja",
+        "Gato de Manga",
+        "Tung Saur", 
+        "Tralaleiro",
+        "Monstro S.A",
+        "Trenzinho",
+        "Dino",
+        "Pou idoso",
+        "Coco/boxt@",
+        "Coelho",
+        "Hipopótamo",
+        "Ratatui",
+        "Galinha",
+        "Pepa pig",
+        "Pinguin",
+        "Sid",
+        "Puga grande",
+        "SHREK AMALDIÇOADO",
+        "Mosquito grande",
+        "Noob Invertido",
+        "Pato(a)",
+        "Cachorro Chihuahua",
+        "Gato sla",
+        "Gato fei",
+        "Inpostor",
+        "Simon amarelo",
+        "Simon azul"
+    },
+    Callback = function(selected)
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local StarterGui = game:GetService("StarterGui")
+        
+        local avatars = {
+            -- Novos avatares da lista fornecida
+            ["La Vaca Saturno"] = 92598055945546,
+            ["brainrot"] = 71509988068185,
+            ["Galo"] = 134279966389194,
+            ["Capivara"] = 123881270149502,
+            ["Tigre"] = 119471161887334,
+            ["Capivara"] = 70941023284215,
+            ["Peixe"] = 100767254038825,
+            ["Pepino Doidao"] = 140311949273388,
+            ["Gato"] = 18863879460,
+            ["Rato"] = 94426045122131,
+            ["Sei la KKKKOKK"] = 130540554592449,
+            ["Pato Banana"] = 101283140862013,
+            ["Fantasma"] = 15294031319,
+            ["Gato Lasanha"] = 80036937359835,
+            ["Arvore"] = 91559013873343,
+            ["Gato Cupcake"] = 134590778152934,
+            ["Formiga"] = 117567910327875,
+            ["KKKKKKKK"] = 126610774641341,
+            ["Sherek Feiosa"] = 93929184789448,
+            ["Frango"] = 12151793832,
+            ["Pinguin"] = 94944293759578,
+            ["rato"] = 115152504142706,
+            ["Minions"] = 80206221835435,
+            ["Dinossauro"] = 78418661102501,
+            ["Ovni"] = 108699752030063,
+            ["Passaro Gordo"] = 17850619237,
+            ["Balao Cachorro"] = 87116547256834,
+            ["Urso Pelucia"] = 130455255821318,
+            ["Minecraft"] = 18161752527,
+            ["Fofuxo"] = 13354344881,
+            ["Sapo"] = 108623435649969,
+            ["Bruxo"] = 18459833677,
+            ["Rato Grande"] = 18843948073,
+            ["Burro"] = 133145533787450,
+            ["Nemo"] = 91530170242128,
+            ["Careca desenho KKKKK"] = 114218821771642,
+            ["Pinguin Mini"] = 140417314445581,
+            ["Mini Sherek"] = 121680981245369,
+            ["Coruja"] = 16259522726,
+            -- Avatares originais
+            ["Gato de Manga"] = 124948425515124,
+            ["Tung Saur"] = 117098257036480,
+            ["Tralaleiro"] = 99459753608381,
+            ["Monstro S.A"] = 123609977175226,
+            ["Trenzinho"] = 80468697076178,
+            ["Dino"] = 11941741105,
+            ["Pou idoso"] = 15742966010,
+            ["Coco/boxt@"] = 77013984520332,
+            ["Coelho"] = 71797333686800,
+            ["Hipopótamo"] = 73215892129281,
+            ["Ratatui"] = 108557570415453,
+            ["Galinha"] = 71251793812515,
+            ["Pepa pig"] = 92979204778377,
+            ["Sid"] = 87442757321244,
+            ["Puga grande"] = 111436158728716,
+            ["SHREK AMALDIÇOADO"] = 120960401202173,
+            ["Mosquito grande"] = 108052868536435,
+            ["Noob Invertido"] = 106596990206151,
+            ["Pato(a)"] = 135132836238349,
+            ["Cachorro Chihuahua"] = 18656467256,
+            ["Gato sla"] = 18994959003,
+            ["Gato fei"] = 77506186615650,
+            ["Inpostor"] = 18234669337,
+            ["Simon amarelo"] = 75183593514657,
+            ["Simon azul"] = 76155710249925
+        }
+        
+        if avatars[selected] then
+            pcall(function()
+                local args = {avatars[selected]}
+                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+                StarterGui:SetCore("SendNotification", {
+                    Title = "Avatar",
+                    Text = "Avatar " .. selected .. " equipado!",
+                    Duration = 3
+                })
+            end)
+        end
+    end
+})
+
+Tab:AddSection({"Avatar Editor"})
+
+Tab:AddParagraph({
+    Title = "Aviso: Vai resetar seu avatar",
+    Content = "Os avatares abaixo irão substituir completamente seu personagem atual."
+})
+
+Tab:AddButton({
+    Name = "Mini REPO",
+    Description = "Avatar mini personalizado",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local StarterGui = game:GetService("StarterGui")
+        
+        pcall(function()
+            local parts = {
+                117101023704825,
+                125767940563838,
+                137301494386930,
+                87357384184710,
+                133391239416999,
+                111818794467824
+            }
+            local args = {parts}
+            ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ChangeCharacterBody"):InvokeServer(unpack(args))
+            StarterGui:SetCore("SendNotification", {
+                Title = "Avatar",
+                Text = "Mini REPO equipado!",
+                Duration = 3
+            })
+        end)
+    end
+})
+
+Tab:AddButton({
+    Name = "Mini Garanhão",
+    Description = "Avatar mini garanhão",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local StarterGui = game:GetService("StarterGui")
+        
+        pcall(function()
+            local parts = {
+                124355047456535,
+                120507500641962,
+                82273782655463,
+                113625313757230,
+                109182039511426,
+                0
+            }
+            local args = {parts}
+            ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ChangeCharacterBody"):InvokeServer(unpack(args))
+            StarterGui:SetCore("SendNotification", {
+                Title = "Avatar",
+                Text = "Mini Garanhão equipado!",
+                Duration = 3
+            })
+        end)
+    end
+})
+
+Tab:AddButton({
+    Name = "Stick",
+    Description = "Avatar estilo palito",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local StarterGui = game:GetService("StarterGui")
+        
+        pcall(function()
+            local parts = {
+                14731384498,
+                14731377938,
+                14731377894,
+                14731377875,
+                14731377941,
+                14731382899
+            }
+            local args = {parts}
+            ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ChangeCharacterBody"):InvokeServer(unpack(args))
+            StarterGui:SetCore("SendNotification", {
+                Title = "Avatar",
+                Text = "Stick equipado!",
+                Duration = 3
+            })
+        end)
+    end
+})
+
+Tab:AddButton({
+    Name = "Chunky-Bug",
+    Description = "Avatar estilo bug",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local StarterGui = game:GetService("StarterGui")
+        
+        pcall(function()
+            local parts = {
+                15527827600,
+                15527827578,
+                15527831669,
+                15527836067,
+                15527827184,
+                15527827599
+            }
+            local args = {parts}
+            ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ChangeCharacterBody"):InvokeServer(unpack(args))
+            StarterGui:SetCore("SendNotification", {
+                Title = "Avatar",
+                Text = "Chunky-Bug equipado!",
+                Duration = 3
+            })
+        end)
+    end
+})
+
+Tab:AddButton({
+    Name = "Cursed-Spider",
+    Description = "Avatar aranha amaldiçoada",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local StarterGui = game:GetService("StarterGui")
+        
+        pcall(function()
+            local parts = {
+                134555168634906,
+                100269043793774,
+                125607053187319,
+                122504853343598,
+                95907982259204,
+                91289185840375
+            }
+            local args = {parts}
+            ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ChangeCharacterBody"):InvokeServer(unpack(args))
+            StarterGui:SetCore("SendNotification", {
+                Title = "Avatar",
+                Text = "Cursed-Spider equipado!",
+                Duration = 3
+            })
+        end)
+    end
+})
+
+Tab:AddButton({
+    Name = "Possessed-Horror",
+    Description = "Avatar horror possuído",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local StarterGui = game:GetService("StarterGui")
+        
+        pcall(function()
+            local parts = {
+                122800511983371,
+                132465361516275,
+                125155800236527,
+                83070163355072,
+                102906187256945,
+                78311422507297
+            }
+            local args = {parts}
+            ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ChangeCharacterBody"):InvokeServer(unpack(args))
+            StarterGui:SetCore("SendNotification", {
+                Title = "Avatar",
+                Text = "Possessed-Horror equipado!",
+                Duration = 3
+            })
+        end)
+    end
+})
+
+local scriptsTab = Window:MakeTab({"Scripts", "rbxassetid://130521044774541"})
+
+scriptsTab:AddSection({ "Black Hole" })
+
+scriptsTab:AddButton({
+    Name = "Black Hole",
+    Description = "",
+    Callback = function()
+        local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+local angle = 1
+local radius = 10
+local blackHoleActive = false
+
+local function setupPlayer()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    local Folder = Instance.new("Folder", Workspace)
+    local Part = Instance.new("Part", Folder)
+    local Attachment1 = Instance.new("Attachment", Part)
+    Part.Anchored = true
+    Part.CanCollide = false
+    Part.Transparency = 1
+
+    return humanoidRootPart, Attachment1
+end
+
+local humanoidRootPart, Attachment1 = setupPlayer()
+
+if not getgenv().Network then
+    getgenv().Network = {
+        BaseParts = {},
+        Velocity = Vector3.new(14.46262424, 14.46262424, 14.46262424)
+    }
+
+    Network.RetainPart = function(part)
+        if typeof(part) == "Instance" and part:IsA("BasePart") and part:IsDescendantOf(Workspace) then
+            table.insert(Network.BaseParts, part)
+            part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+            part.CanCollide = false
+        end
+    end
+
+    local function EnablePartControl()
+        LocalPlayer.ReplicationFocus = Workspace
+        RunService.Heartbeat:Connect(function()
+            sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
+            for _, part in pairs(Network.BaseParts) do
+                if part:IsDescendantOf(Workspace) then
+                    part.Velocity = Network.Velocity
+                end
+            end
+        end)
+    end
+
+    EnablePartControl()
+end
+
+local function ForcePart(v)
+    if v:IsA("Part") and not v.Anchored and not v.Parent:FindFirstChild("Humanoid") and not v.Parent:FindFirstChild("Head") and v.Name ~= "Handle" then
+        for _, x in next, v:GetChildren() do
+            if x:IsA("BodyAngularVelocity") or x:IsA("BodyForce") or x:IsA("BodyGyro") or x:IsA("BodyPosition") or x:IsA("BodyThrust") or x:IsA("BodyVelocity") or x:IsA("RocketPropulsion") then
+                x:Destroy()
+            end
+        end
+        if v:FindFirstChild("Attachment") then
+            v:FindFirstChild("Attachment"):Destroy()
+        end
+        if v:FindFirstChild("AlignPosition") then
+            v:FindFirstChild("AlignPosition"):Destroy()
+        end
+        if v:FindFirstChild("Torque") then
+            v:FindFirstChild("Torque"):Destroy()
+        end
+        v.CanCollide = false
+        
+        local Torque = Instance.new("Torque", v)
+        Torque.Torque = Vector3.new(1000000, 1000000, 1000000)
+        local AlignPosition = Instance.new("AlignPosition", v)
+        local Attachment2 = Instance.new("Attachment", v)
+        Torque.Attachment0 = Attachment2
+        AlignPosition.MaxForce = math.huge
+        AlignPosition.MaxVelocity = math.huge
+        AlignPosition.Responsiveness = 500
+        AlignPosition.Attachment0 = Attachment2
+        AlignPosition.Attachment1 = Attachment1
+    end
+end
+
+local function toggleBlackHole()
+    blackHoleActive = not blackHoleActive
+    if blackHoleActive then
+        for _, v in next, Workspace:GetDescendants() do
+            ForcePart(v)
+        end
+
+        Workspace.DescendantAdded:Connect(function(v)
+            if blackHoleActive then
+                ForcePart(v)
+            end
+        end)
+
+        spawn(function()
+            while blackHoleActive and RunService.RenderStepped:Wait() do
+                angle = angle + math.rad(2)
+
+                local offsetX = math.cos(angle) * radius
+                local offsetZ = math.sin(angle) * radius
+
+                Attachment1.WorldCFrame = humanoidRootPart.CFrame * CFrame.new(offsetX, 0, offsetZ)
+            end
+        end)
+    else
+        Attachment1.WorldCFrame = CFrame.new(0, -1000, 0)
+    end
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+    humanoidRootPart, Attachment1 = setupPlayer()
+    if blackHoleActive then
+        toggleBlackHole()
+    end
+end)
+
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/miroeramaa/TurtleLib/main/TurtleUiLib.lua"))()
+local window = library:Window("Projeto LKB")
+
+window:Slider("Radius Blackhole",1,100,10, function(Value)
+   radius = Value
+end)
+
+window:Toggle("Blackhole", true, function(Value)
+       if Value then
+            toggleBlackHole()
+        else
+            blackHoleActive = false
+        end
+end)
+
+spawn(function()
+    while true do
+        RunService.RenderStepped:Wait()
+        if blackHoleActive then
+            angle = angle + math.rad(angleSpeed)
+        end
+    end
+end)
+
+toggleBlackHole()
+    end
+})
+
+scriptsTab:AddButton({
+    Name = "Puxar Parts Player",
+    Description = "",
+    Callback = function()
+        -- Gui to Lua
+-- Version: 3.2
+
+-- Instances:
+
+local Gui = Instance.new("ScreenGui")
+local Main = Instance.new("Frame")
+local Box = Instance.new("TextBox")
+local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
+local Label = Instance.new("TextLabel")
+local UITextSizeConstraint_2 = Instance.new("UITextSizeConstraint")
+local Button = Instance.new("TextButton")
+local UITextSizeConstraint_3 = Instance.new("UITextSizeConstraint")
+
+--Properties:
+
+Gui.Name = "Gui"
+Gui.Parent = gethui()
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+Main.Name = "Main"
+Main.Parent = Gui
+Main.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+Main.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Main.BorderSizePixel = 0
+Main.Position = UDim2.new(0.335954279, 0, 0.542361975, 0)
+Main.Size = UDim2.new(0.240350261, 0, 0.166880623, 0)
+Main.Active = true
+Main.Draggable = true
+
+Box.Name = "Box"
+Box.Parent = Main
+Box.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
+Box.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Box.BorderSizePixel = 0
+Box.Position = UDim2.new(0.0980926454, 0, 0.218712583, 0)
+Box.Size = UDim2.new(0.801089942, 0, 0.364963502, 0)
+Box.FontFace = Font.new("rbxasset://fonts/families/SourceSansSemibold.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+Box.PlaceholderText = "Player here"
+Box.Text = ""
+Box.TextColor3 = Color3.fromRGB(255, 255, 255)
+Box.TextScaled = true
+Box.TextSize = 31.000
+Box.TextWrapped = true
+
+UITextSizeConstraint.Parent = Box
+UITextSizeConstraint.MaxTextSize = 31
+
+Label.Name = "Label"
+Label.Parent = Main
+Label.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
+Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Label.BorderSizePixel = 0
+Label.Size = UDim2.new(1, 0, 0.160583943, 0)
+Label.FontFace = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+Label.Text = "Bring Parts"
+Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+Label.TextScaled = true
+Label.TextSize = 14.000
+Label.TextWrapped = true
+
+UITextSizeConstraint_2.Parent = Label
+UITextSizeConstraint_2.MaxTextSize = 21
+
+Button.Name = "Button"
+Button.Parent = Main
+Button.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
+Button.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Button.BorderSizePixel = 0
+Button.Position = UDim2.new(0.183284417, 0, 0.656760991, 0)
+Button.Size = UDim2.new(0.629427791, 0, 0.277372271, 0)
+Button.Font = Enum.Font.Nunito
+Button.Text = "Bring | Off"
+Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+Button.TextScaled = true
+Button.TextSize = 28.000
+Button.TextWrapped = true
+
+UITextSizeConstraint_3.Parent = Button
+UITextSizeConstraint_3.MaxTextSize = 28
+
+-- Scripts:
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local character
+local humanoidRootPart
+
+mainStatus = true
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+	if input.KeyCode == Enum.KeyCode.RightControl and not gameProcessedEvent then
+		mainStatus = not mainStatus
+		Main.Visible = mainStatus
+	end
+end)
+
+local Folder = Instance.new("Folder", Workspace)
+local Part = Instance.new("Part", Folder)
+local Attachment1 = Instance.new("Attachment", Part)
+Part.Anchored = true
+Part.CanCollide = false
+Part.Transparency = 1
+
+if not getgenv().Network then
+	getgenv().Network = {
+		BaseParts = {},
+		Velocity = Vector3.new(14.46262424, 14.46262424, 14.46262424)
+	}
+
+	Network.RetainPart = function(Part)
+		if Part:IsA("BasePart") and Part:IsDescendantOf(Workspace) then
+			table.insert(Network.BaseParts, Part)
+			Part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+			Part.CanCollide = false
+		end
+	end
+
+	local function EnablePartControl()
+		LocalPlayer.ReplicationFocus = Workspace
+		RunService.Heartbeat:Connect(function()
+			sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
+			for _, Part in pairs(Network.BaseParts) do
+				if Part:IsDescendantOf(Workspace) then
+					Part.Velocity = Network.Velocity
+				end
+			end
+		end)
+	end
+
+	EnablePartControl()
+end
+
+local function ForcePart(v)
+	if v:IsA("BasePart") and not v.Anchored and not v.Parent:FindFirstChildOfClass("Humanoid") and not v.Parent:FindFirstChild("Head") and v.Name ~= "Handle" then
+		for _, x in ipairs(v:GetChildren()) do
+			if x:IsA("BodyMover") or x:IsA("RocketPropulsion") then
+				x:Destroy()
+			end
+		end
+		if v:FindFirstChild("Attachment") then
+			v:FindFirstChild("Attachment"):Destroy()
+		end
+		if v:FindFirstChild("AlignPosition") then
+			v:FindFirstChild("AlignPosition"):Destroy()
+		end
+		if v:FindFirstChild("Torque") then
+			v:FindFirstChild("Torque"):Destroy()
+		end
+		v.CanCollide = false
+		local Torque = Instance.new("Torque", v)
+		Torque.Torque = Vector3.new(100000, 100000, 100000)
+		local AlignPosition = Instance.new("AlignPosition", v)
+		local Attachment2 = Instance.new("Attachment", v)
+		Torque.Attachment0 = Attachment2
+		AlignPosition.MaxForce = math.huge
+		AlignPosition.MaxVelocity = math.huge
+		AlignPosition.Responsiveness = 200
+		AlignPosition.Attachment0 = Attachment2
+		AlignPosition.Attachment1 = Attachment1
+	end
+end
+
+local blackHoleActive = false
+local DescendantAddedConnection
+
+local function toggleBlackHole()
+	blackHoleActive = not blackHoleActive
+	if blackHoleActive then
+		Button.Text = "Bring Parts | On"
+		for _, v in ipairs(Workspace:GetDescendants()) do
+			ForcePart(v)
+		end
+
+		DescendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
+			if blackHoleActive then
+				ForcePart(v)
+			end
+		end)
+
+		spawn(function()
+			while blackHoleActive and RunService.RenderStepped:Wait() do
+				Attachment1.WorldCFrame = humanoidRootPart.CFrame
+			end
+		end)
+	else
+		Button.Text = "Bring Parts | Off"
+		if DescendantAddedConnection then
+			DescendantAddedConnection:Disconnect()
+		end
+	end
+end
+
+local function getPlayer(name)
+	local lowerName = string.lower(name)
+	for _, p in pairs(Players:GetPlayers()) do
+		local lowerPlayer = string.lower(p.Name)
+		if string.find(lowerPlayer, lowerName) then
+			return p
+		elseif string.find(string.lower(p.DisplayName), lowerName) then
+			return p
+		end
+	end
+end
+
+local player = nil
+
+local function VDOYZQL_fake_script() -- Box.Script 
+	local script = Instance.new('Script', Box)
+
+	script.Parent.FocusLost:Connect(function(enterPressed)
+		if enterPressed then
+			player = getPlayer(Box.Text)
+			if player then
+				Box.Text = player.Name
+				print("Player found:", player.Name)
+			else
+				print("Player not found")
+			end
+		end
+	end)
+end
+coroutine.wrap(VDOYZQL_fake_script)()
+local function JUBNQKI_fake_script() -- Button.Script 
+	local script = Instance.new('Script', Button)
+
+	script.Parent.MouseButton1Click:Connect(function()
+		if player then
+			character = player.Character or player.CharacterAdded:Wait()
+			humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+			toggleBlackHole()
+		else
+			print("Player is not selected")
+		end
+	end)
+end
+coroutine.wrap(JUBNQKI_fake_script)()
+    end
+})
+
+scriptsTab:AddSection({ "Glue & Invisível" })
+
+scriptsTab:AddButton({
+    Name = "FE Invisível",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ShadowsHubseila/Fica-invis-vel-kkj/refs/heads/main/Kkj"))()
+    end
+})
+
+scriptsTab:AddButton({
+    Name = "Glue",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ShadowsHubseila/Glue/refs/heads/main/Main%20(5)%20(2).txt"))()
+    end
+})
+
+-- Variáveis globais para controlar os scripts
+cancelExpansion = false
+expansionSound = nil
+expansionModel = nil
+originalSky = nil
+originalLighting = {}
+createdSky = nil
+
+scriptsTab:AddSection({ "Ataque Goner" })
+scriptsTab:AddButton({
+    Name = "Ataque Goner By Shadows",
+    Description = "",
+    Callback = function()
+-- Serviços
+local TextChatService = game:GetService("TextChatService")
+local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Player = Players.LocalPlayer
+
+-- Reset da variável de cancelamento
+cancelExpansion = false
+
+-- Salva configurações originais do Lighting
+originalLighting = {
+    Brightness = Lighting.Brightness,
+    ClockTime = Lighting.ClockTime,
+    GeographicLatitude = Lighting.GeographicLatitude,
+    OutdoorAmbient = Lighting.OutdoorAmbient,
+    Ambient = Lighting.Ambient,
+    FogColor = Lighting.FogColor,
+    FogEnd = Lighting.FogEnd
+}
+
+-- Aviso no chat
+if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then 
+    TextChatService.TextChannels.RBXGeneral:SendAsync(
+        "hi\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\rServer: Ataque Goner BY Shadows"
+    )
+else 
+    print("gojo chorou no banho F")
+end
+
+-- Função para ativar Expansão de Domínio (VERSÃO VERMELHA)
+local function ativarDominio()
+    local char = Player.Character or Player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    local dominio = Instance.new("Model", workspace)
+    dominio.Name = "InfiniteVoid"
+    expansionModel = dominio
+
+    -- Esfera VERMELHA
+    local esfera = Instance.new("Part")
+    esfera.Shape = Enum.PartType.Ball
+    esfera.Size = Vector3.new(300, 300, 300)
+    esfera.Position = hrp.Position
+    esfera.Anchored = true
+    esfera.CanCollide = false
+    esfera.Material = Enum.Material.ForceField
+    esfera.Transparency = 0.3
+    esfera.Color = Color3.fromRGB(150, 0, 0)  -- Vermelho escuro
+    esfera.Parent = dominio
+
+    -- Luz VERMELHA
+    local luz = Instance.new("PointLight", esfera)
+    luz.Color = Color3.fromRGB(255, 0, 0)  -- Vermelho intenso
+    luz.Brightness = 10
+    luz.Range = 300
+
+    -- Partículas VERMELHAS
+    local ps = Instance.new("ParticleEmitter", esfera)
+    ps.Texture = "rbxassetid://243660364"
+    ps.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0))  -- Vermelho
+    ps.LightEmission = 1
+    ps.Size = NumberSequence.new(3)
+    ps.Transparency = NumberSequence.new(0.2)
+    ps.Rate = 1000
+    ps.Lifetime = NumberRange.new(2)
+    ps.Speed = NumberRange.new(0)
+    ps.VelocitySpread = 180
+
+    -- SOM PRINCIPAL (ID 5813114232)
+    local som = Instance.new("Sound", esfera)
+    som.SoundId = "rbxassetid://5813114232"
+    som.Volume = 2
+    som.Looped = true
+    som:Play()
+    expansionSound = som
+
+    -- Salva Sky original
+    originalSky = Lighting:FindFirstChildOfClass("Sky")
+    if originalSky then
+        originalSky.Parent = nil
+    end
+
+    -- Remove Atmosphere existente
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("Atmosphere") then
+            obj:Destroy()
+        end
+    end
+
+    -- SKYBOX VERMELHO COM IMAGEM 6300792626 (PROTEGIDO)
+    local newSky = Instance.new("Sky")
+    local skyTextureId = "rbxassetid://6300792626"
+    newSky.Name = "GonerSkybox"
+    newSky.SkyboxBk = skyTextureId
+    newSky.SkyboxDn = skyTextureId
+    newSky.SkyboxFt = skyTextureId
+    newSky.SkyboxLf = skyTextureId
+    newSky.SkyboxRt = skyTextureId
+    newSky.SkyboxUp = skyTextureId
+    newSky.Parent = Lighting
+    createdSky = newSky
+
+    -- Sistema de proteção do skybox
+    task.spawn(function()
+        while not cancelExpansion do
+            if not createdSky or createdSky.Parent ~= Lighting then
+                -- Recria o skybox se for removido
+                local recreatedSky = Instance.new("Sky")
+                recreatedSky.Name = "GonerSkybox"
+                recreatedSky.SkyboxBk = skyTextureId
+                recreatedSky.SkyboxDn = skyTextureId
+                recreatedSky.SkyboxFt = skyTextureId
+                recreatedSky.SkyboxLf = skyTextureId
+                recreatedSky.SkyboxRt = skyTextureId
+                recreatedSky.SkyboxUp = skyTextureId
+                recreatedSky.Parent = Lighting
+                createdSky = recreatedSky
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    -- Efeitos de iluminação VERMELHA INTENSA
+    Lighting.Brightness = 2
+    Lighting.ClockTime = 14
+    Lighting.GeographicLatitude = 0
+    Lighting.OutdoorAmbient = Color3.fromRGB(200, 0, 0)  -- Vermelho
+    Lighting.Ambient = Color3.fromRGB(255, 0, 0)  -- Vermelho intenso
+    Lighting.FogColor = Color3.fromRGB(150, 0, 0)  -- Neblina vermelha
+    Lighting.FogEnd = 500  -- Neblina próxima
+
+    print(" Skybox Goner aplicado com imagem 6300792626")
+end
+
+-- Executa a expansão de domínio
+ativarDominio()
+
+-- ========================
+-- SISTEMA DE ÁUDIO COMPLETO (ID 5813114232)
+-- ========================
+local selectedAudioID = 5813114232
+
+-- Áudio via RemoteEvent
+task.spawn(function()
+    while not cancelExpansion do
+        local remote = ReplicatedStorage:FindFirstChild("RE") and ReplicatedStorage.RE:FindFirstChild("1Gu1nSound1s")
+        if remote then
+            pcall(function()
+                remote:FireServer(workspace, selectedAudioID, 1)
+            end)
+        end
+        task.wait(1)
+    end
+end)
+
+-- Áudio local no jogador
+task.spawn(function()
+    while not cancelExpansion do
+        local root = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local sound = Instance.new("Sound")
+            sound.SoundId = "rbxassetid://" .. selectedAudioID
+            sound.Volume = 1
+            sound.Looped = false
+            sound.Parent = root
+            sound:Play()
+            sound.Ended:Connect(function() sound:Destroy() end)
+            task.wait(sound.TimeLength + 0.1)
+        else
+            task.wait(1)
+        end
+    end
+end)
+
+-- Áudio adicional no workspace
+task.spawn(function()
+    while not cancelExpansion do
+        local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://" .. selectedAudioID
+        sound.Volume = 1.5
+        sound.Looped = false
+        sound.Parent = workspace
+        sound:Play()
+        game:GetService("Debris"):AddItem(sound, sound.TimeLength + 1)
+        task.wait(sound.TimeLength + 0.5)
+    end
+end)
+
+-- ========================
+-- ATAQUE COM ARMA: Assault
+-- ========================
+
+local RE = ReplicatedStorage:WaitForChild("RE")
+local ClearEvent = RE:FindFirstChild("1Clea1rTool1s")
+local ToolEvent = RE:FindFirstChild("1Too1l")
+local FireEvent = RE:FindFirstChild("1Gu1n")
+
+-- Limpa ferramentas
+local function clearAllTools()
+    if ClearEvent then
+        pcall(function()
+            ClearEvent:FireServer("ClearAllTools")
+        end)
+    end
+end
+
+-- Solicita Assault
+local function getAssault()
+    if ToolEvent then
+        pcall(function()
+            ToolEvent:InvokeServer("PickingTools", "Assault")
+        end)
+    end
+end
+
+-- Verifica se recebeu Assault
+local function hasAssault()
+    return Player.Backpack:FindFirstChild("Assault") ~= nil
+end
+
+-- Atira em parte
+local function fireAtPart(targetPart)
+    local gunScript = Player.Backpack:FindFirstChild("Assault")
+        and Player.Backpack.Assault:FindFirstChild("GunScript_Local")
+
+    if not gunScript or not targetPart then return end
+
+    local args = {
+        targetPart,
+        targetPart,
+        Vector3.new(1e14, 1e14, 1e14),
+        targetPart.Position,
+        gunScript:FindFirstChild("MuzzleEffect"),
+        gunScript:FindFirstChild("HitEffect"),
+        0,
+        0,
+        { false },
+        {
+            25,
+            Vector3.new(100, 100, 100),
+            BrickColor.new(29),
+            0.25,
+            Enum.Material.SmoothPlastic,
+            0.25
+        },
+        true,
+        false
+    }
+
+    pcall(function()
+        FireEvent:FireServer(unpack(args))
+    end)
+end
+
+-- Atira em todos os jogadores
+local function fireAtAllPlayers(times)
+    for i = 1, times do
+        if cancelExpansion then break end
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= Player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                fireAtPart(player.Character.HumanoidRootPart)
+                task.wait(0.1)
+            end
+        end
+    end
+end
+
+-- Loop automático de ataque
+task.spawn(function()
+    while not cancelExpansion do
+        clearAllTools()
+        getAssault()
+
+        repeat
+            task.wait(0.2)
+        until hasAssault() or cancelExpansion
+
+        if not cancelExpansion then
+            fireAtAllPlayers(3)
+            task.wait(1)
+        end
+    end
+end)
+end
+})
+
+scriptsTab:AddButton({
+    Name = "Para Ataque Goner",
+    Description = "",
+    Callback = function()
+        local Lighting = game:GetService("Lighting")
+        local TextChatService = game:GetService("TextChatService")
+        
+        -- Sinaliza para parar loops
+        cancelExpansion = true
+
+        task.wait(0.5)  -- Aguarda loops finalizarem
+
+        -- Para e remove TODOS os sons
+        if expansionSound then
+            expansionSound:Stop()
+            expansionSound:Destroy()
+            expansionSound = nil
+        end
+
+        -- Remove todos os sons do workspace
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Sound") and obj.SoundId == "rbxassetid://5813114232" then
+                obj:Stop()
+                obj:Destroy()
+            end
+        end
+
+        -- Remove sons do personagem
+        local Players = game:GetService("Players")
+        local Player = Players.LocalPlayer
+        if Player.Character then
+            for _, obj in ipairs(Player.Character:GetDescendants()) do
+                if obj:IsA("Sound") and obj.SoundId == "rbxassetid://5813114232" then
+                    obj:Stop()
+                    obj:Destroy()
+                end
+            end
+        end
+
+        -- Remove o modelo "InfiniteVoid" criado (ESFERA VERMELHA)
+        if expansionModel and expansionModel.Parent then
+            expansionModel:Destroy()
+            expansionModel = nil
+        end
+
+        -- Remove qualquer modelo InfiniteVoid restante
+        for _, obj in ipairs(workspace:GetChildren()) do
+            if obj:IsA("Model") and obj.Name == "InfiniteVoid" then
+                obj:Destroy()
+            end
+        end
+
+        -- Remove o skybox criado
+        if createdSky and createdSky.Parent then
+            createdSky:Destroy()
+            createdSky = nil
+        end
+        
+        -- Remove qualquer skybox com nome GonerSkybox
+        for _, obj in ipairs(Lighting:GetChildren()) do
+            if obj:IsA("Sky") and obj.Name == "GonerSkybox" then
+                obj:Destroy()
+            end
+        end
+
+        -- Restaura o Sky original
+        if originalSky then
+            originalSky.Parent = Lighting
+            originalSky = nil
+        end
+
+        -- Restaura configurações originais do Lighting (REMOVE EFEITOS VERMELHOS)
+        if originalLighting.Brightness then
+            Lighting.Brightness = originalLighting.Brightness
+            Lighting.ClockTime = originalLighting.ClockTime
+            Lighting.GeographicLatitude = originalLighting.GeographicLatitude
+            Lighting.OutdoorAmbient = originalLighting.OutdoorAmbient
+            Lighting.Ambient = originalLighting.Ambient
+            Lighting.FogColor = originalLighting.FogColor
+            Lighting.FogEnd = originalLighting.FogEnd
+        else
+            -- Se não houver backup, restaura valores padrão
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.GeographicLatitude = 41.733
+            Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
+            Lighting.Ambient = Color3.fromRGB(127, 127, 127)
+            Lighting.FogColor = Color3.fromRGB(191, 191, 191)
+            Lighting.FogEnd = 100000
+        end
+
+        -- Limpa a tabela de backup
+        originalLighting = {}
+
+        -- Mensagem no chat confirmando cancelamento
+        if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+            TextChatService.TextChannels.RBXGeneral:SendAsync("Ataque Goner Parado By Shadows")
+        else
+            print("Ataque Goner Parado By Shadows")
+        end
+        
+        print(" Esfera vermelha removida")
+        print(" Skybox restaurado")
+        print(" Iluminação vermelha removida")
+        print(" Sons parados")
+    end
+})
+
+scriptsTab:AddSection({ "Desastres naturais" })
+scriptsTab:AddButton({
+    Name = "Tornado Com Navio Grande",
+    Description = "",
+    Callback = function()
+local RS = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TextChatService = game:GetService("TextChatService")
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local RootPart = Character:WaitForChild("HumanoidRootPart")
+local Vehicles = workspace:WaitForChild("Vehicles")
+
+-- Aviso no chat
+if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then 
+    TextChatService.TextChannels.RBXGeneral:SendAsync(
+        "hi\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r[ UM TORNADO SURGIU! SHADOWS Hub by Shadows ]"
+    )
+else 
+    print("Nadaa")
+end
+
+-- Função para tocar o áudio 5 vezes
+local selectedAudioID = 9068077052
+local function playAudio()
+    if not selectedAudioID then
+        warn("Nenhum áudio selecionado!")
+        return
+    end
+
+    local args = {
+        [1] = workspace,
+        [2] = selectedAudioID,
+        [3] = 1,
+    }
+
+    for i = 1, 5 do
+        RS.RE:FindFirstChild("1Gu1nSound1s"):FireServer(unpack(args))
+
+        local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://" .. tostring(selectedAudioID)
+        sound.Parent = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if sound.Parent then
+            sound:Play()
+        else
+            warn("HumanoidRootPart não encontrado")
+            break
+        end
+
+        task.wait(1.5)
+        sound:Destroy()
+    end
+end
+
+-- Spawn do barco
+local function spawnBoat()
+    RootPart.CFrame = CFrame.new(1754, -2, 58)
+    task.wait(0.5)
+    RS:WaitForChild("RE"):FindFirstChild("1Ca1r"):FireServer("PickingBoat", "PirateFree")
+    task.wait(1)
+    return Vehicles:FindFirstChild(Player.Name .. "Car")
+end
+
+local PCar = spawnBoat()
+if not PCar then
+    warn("Falha ao spawnar o barco")
+    return
+end
+
+print("Barco PirateFree gerado!")
+
+local Seat = PCar:FindFirstChild("Body") and PCar.Body:FindFirstChild("VehicleSeat")
+if not Seat then
+    warn("Seat não encontrado")
+    return
+end
+
+-- Sentar no assento
+repeat
+    task.wait(0.1)
+    RootPart.CFrame = Seat.CFrame * CFrame.new(0, 1, 0)
+until Humanoid.SeatPart == Seat
+
+print("Jogador sentado com sucesso!")
+
+-- Tocar áudio em paralelo
+task.spawn(playAudio)
+
+-- Ejetar após 4 segundos
+task.delay(4, function()
+    if Humanoid.SeatPart then
+        Humanoid.Sit = false
+    end
+    RootPart.CFrame = CFrame.new(0, 0, 0)
+    print("Jogador ejetado e teleportado")
+end)
+
+-- Flip loop paralelo
+local RE_Flip = RS:WaitForChild("RE"):WaitForChild("1Player1sCa1r")
+task.spawn(function()
+    while PCar and PCar.Parent do
+        RE_Flip:FireServer("Flip")
+        task.wait(0.5)
+    end
+end)
+
+-- Configuração de movimento
+local waypoints = {
+    Vector3.new(-16, 0, -47),
+    Vector3.new(-110, 0, -45),
+    Vector3.new(16, 0, -55)
+}
+
+local currentIndex = 1
+local nextIndex = 2
+local moveSpeed = 15
+local rotationSpeed = math.rad(720) -- 720°/s
+local progress = 0
+local currentRotation = 0
+
+local function lerpCFrame(a, b, t)
+    return a:lerp(b, t)
+end
+
+-- Movimento + rotação
+RunService.Heartbeat:Connect(function(dt)
+    if not (PCar and PCar.PrimaryPart) then return end
+
+    local startPos = waypoints[currentIndex]
+    local endPos = waypoints[nextIndex]
+
+    progress += (moveSpeed * dt) / (startPos - endPos).Magnitude
+    if progress >= 1 then
+        progress = 0
+        currentIndex = nextIndex
+        nextIndex = (nextIndex % #waypoints) + 1
+    end
+
+    local newPos = lerpCFrame(CFrame.new(startPos), CFrame.new(endPos), progress).p
+    currentRotation += rotationSpeed * dt
+
+    local cf = CFrame.new(newPos) * CFrame.Angles(0, currentRotation, 0)
+    PCar:SetPrimaryPartCFrame(cf)
+end)
+end
+})
+
+scriptsTab:AddButton({
+    Name = "Desativar Tornado e Remover Veículo",
+    Description = "",
+    Callback = function()
+        -- Tenta remover o veículo via RemoteEvent
+        local success, err = pcall(function()
+            local args = { "DeleteAllVehicles" }
+            game:GetService("ReplicatedStorage"):WaitForChild("RE"):WaitForChild("1Ca1r"):FireServer(unpack(args))
+        end)
+
+        if not success then
+            warn("Falha ao deletar veículos:", err)
+        else
+            print("[Shaodws Hub] Tornado finalizado e veículos deletados.")
+        end
+    end
+})
+
+scriptsTab:AddSection({ "ESP" })
+
+-- Inicializa estrutura global ANTES de tudo
+if not _G.ESPData then
+    _G.ESPData = {
+        espEnabled = false,
+        espType = "Nome + Idade",
+        selectedColor = "RGB",
+        billboardGuis = {},
+        highlights = {},
+        lines = {},
+        connections = {}
+    }
+end
+
+-- Dropdown de TIPO (aparece sempre)
+scriptsTab:AddDropdown({
+    Name = "Tipo de ESP",
+    Default = "Nome + Idade",
+    Options = {"Nome + Idade", "Corpo (Highlight)", "Linhas"},
+    Callback = function(espType)
+        _G.ESPData.espType = espType
+        
+        -- Se o ESP estiver ativado, reaplica com o novo tipo
+        if _G.ESPData.espEnabled then
+            -- Limpa ESP anterior
+            local function clearAllESP()
+                for player, gui in pairs(_G.ESPData.billboardGuis) do
+                    if gui then pcall(function() gui:Destroy() end) end
+                end
+                _G.ESPData.billboardGuis = {}
+                
+                for player, highlight in pairs(_G.ESPData.highlights) do
+                    if highlight then pcall(function() highlight:Destroy() end) end
+                end
+                _G.ESPData.highlights = {}
+                
+                for player, line in pairs(_G.ESPData.lines) do
+                    if line then pcall(function() line:Remove() end) end
+                end
+                _G.ESPData.lines = {}
+                
+                for _, conn in pairs(_G.ESPData.connections) do
+                    if conn and typeof(conn) == "RBXScriptConnection" then
+                        pcall(function() conn:Disconnect() end)
+                    end
+                end
+                _G.ESPData.connections = {}
+            end
+            
+            clearAllESP()
+            -- Reaplica o ESP (a função será definida na toggle)
+            if _G.applyCurrentESP then
+                _G.applyCurrentESP()
+            end
+        end
+    end
+})
+
+-- Dropdown de COR (aparece sempre)
+scriptsTab:AddDropdown({
+    Name = "Cor do ESP",
+    Default = "RGB",
+    Options = {
+        "RGB", "Branco", "Preto", "Vermelho",
+        "Verde", "Azul", "Amarelo", "Rosa", "Roxo"
+    },
+    Callback = function(colorValue)
+        _G.ESPData.selectedColor = colorValue
+        
+        -- Função para obter cor
+        local function getESPColor()
+            local colors = {
+                RGB = function() 
+                    local h = (tick() % 5) / 5
+                    return Color3.fromHSV(h, 1, 1)
+                end,
+                Preto = Color3.fromRGB(0, 0, 0),
+                Branco = Color3.fromRGB(255, 255, 255),
+                Vermelho = Color3.fromRGB(255, 0, 0),
+                Verde = Color3.fromRGB(0, 255, 0),
+                Azul = Color3.fromRGB(0, 170, 255),
+                Amarelo = Color3.fromRGB(255, 255, 0),
+                Rosa = Color3.fromRGB(255, 105, 180),
+                Roxo = Color3.fromRGB(128, 0, 128)
+            }
+            
+            local selectedColor = colors[_G.ESPData.selectedColor]
+            if type(selectedColor) == "function" then
+                return selectedColor()
+            end
+            return selectedColor or Color3.new(1, 1, 1)
+        end
+        
+        -- Atualiza cor imediatamente se ESP estiver ativo
+        for player, gui in pairs(_G.ESPData.billboardGuis) do
+            if gui and gui:FindFirstChild("TextLabel") then
+                gui.TextLabel.TextColor3 = getESPColor()
+            end
+        end
+        
+        for player, highlight in pairs(_G.ESPData.highlights) do
+            if highlight then
+                highlight.FillColor = getESPColor()
+            end
+        end
+        
+        for player, line in pairs(_G.ESPData.lines) do
+            if line then
+                line.Color = getESPColor()
+            end
+        end
+    end
+})
+
+-- Toggle de ativação do ESP
+scriptsTab:AddToggle({
+    Name = "ESP Ativado",
+    Description = "Ativa ou desativa o ESP.",
+    Default = false,
+    Callback = function(value)
+        local Players = game:GetService("Players")
+        local RunService = game:GetService("RunService")
+        local Camera = workspace.CurrentCamera
+        
+        _G.ESPData.espEnabled = value
+        
+        -- Limpa ESP anterior
+        local function clearAllESP()
+            for player, gui in pairs(_G.ESPData.billboardGuis) do
+                if gui then pcall(function() gui:Destroy() end) end
+            end
+            _G.ESPData.billboardGuis = {}
+            
+            for player, highlight in pairs(_G.ESPData.highlights) do
+                if highlight then pcall(function() highlight:Destroy() end) end
+            end
+            _G.ESPData.highlights = {}
+            
+            for player, line in pairs(_G.ESPData.lines) do
+                if line then pcall(function() line:Remove() end) end
+            end
+            _G.ESPData.lines = {}
+            
+            for _, conn in pairs(_G.ESPData.connections) do
+                if conn and typeof(conn) == "RBXScriptConnection" then
+                    pcall(function() conn:Disconnect() end)
+                end
+            end
+            _G.ESPData.connections = {}
+        end
+
+        -- Função para obter a cor
+        local function getESPColor()
+            local colors = {
+                RGB = function() 
+                    local h = (tick() % 5) / 5
+                    return Color3.fromHSV(h, 1, 1)
+                end,
+                Preto = Color3.fromRGB(0, 0, 0),
+                Branco = Color3.fromRGB(255, 255, 255),
+                Vermelho = Color3.fromRGB(255, 0, 0),
+                Verde = Color3.fromRGB(0, 255, 0),
+                Azul = Color3.fromRGB(0, 170, 255),
+                Amarelo = Color3.fromRGB(255, 255, 0),
+                Rosa = Color3.fromRGB(255, 105, 180),
+                Roxo = Color3.fromRGB(128, 0, 128)
+            }
+            
+            local selectedColor = colors[_G.ESPData.selectedColor]
+            if type(selectedColor) == "function" then
+                return selectedColor()
+            end
+            return selectedColor or Color3.new(1, 1, 1)
+        end
+
+        -- ============================================
+        -- FUNÇÃO PARA CRIAR ESP TIPO: NOME + IDADE
+        -- ============================================
+        local function createNameESP(player)
+            if player == Players.LocalPlayer then return end
+            if not _G.ESPData.espEnabled then return end
+            if _G.ESPData.espType ~= "Nome + Idade" then return end
+
+            local character = player.Character
+            if not character then return end
+            
+            local head = character:FindFirstChild("Head")
+            if not head then return end
+
+            if _G.ESPData.billboardGuis[player] then
+                _G.ESPData.billboardGuis[player]:Destroy()
+            end
+
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "ESP_Billboard"
+            billboard.Parent = head
+            billboard.Adornee = head
+            billboard.Size = UDim2.new(0, 200, 0, 50)
+            billboard.StudsOffset = Vector3.new(0, 3, 0)
+            billboard.AlwaysOnTop = true
+
+            local textLabel = Instance.new("TextLabel")
+            textLabel.Name = "TextLabel"
+            textLabel.Parent = billboard
+            textLabel.Size = UDim2.new(1, 0, 1, 0)
+            textLabel.BackgroundTransparency = 1
+            textLabel.TextStrokeTransparency = 0.5
+            textLabel.Font = Enum.Font.SourceSansBold
+            textLabel.TextSize = 14
+            textLabel.Text = player.Name .. " | " .. player.AccountAge .. " dias"
+            textLabel.TextColor3 = getESPColor()
+
+            _G.ESPData.billboardGuis[player] = billboard
+        end
+
+        -- ============================================
+        -- FUNÇÃO PARA CRIAR ESP TIPO: HIGHLIGHT
+        -- ============================================
+        local function createHighlightESP(player)
+            if player == Players.LocalPlayer then return end
+            if not _G.ESPData.espEnabled then return end
+            if _G.ESPData.espType ~= "Corpo (Highlight)" then return end
+
+            local character = player.Character
+            if not character then return end
+
+            if _G.ESPData.highlights[player] then
+                _G.ESPData.highlights[player]:Destroy()
+            end
+
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "ESP_Highlight"
+            highlight.Parent = character
+            highlight.Adornee = character
+            highlight.FillColor = getESPColor()
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            highlight.FillTransparency = 0.5
+            highlight.OutlineTransparency = 0
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+
+            _G.ESPData.highlights[player] = highlight
+        end
+
+        -- ============================================
+        -- FUNÇÃO PARA CRIAR ESP TIPO: LINHAS
+        -- ============================================
+        local function createLineESP(player)
+            if player == Players.LocalPlayer then return end
+            if not _G.ESPData.espEnabled then return end
+            if _G.ESPData.espType ~= "Linhas" then return end
+
+            if _G.ESPData.lines[player] then
+                _G.ESPData.lines[player]:Remove()
+            end
+
+            local line = Drawing.new("Line")
+            line.Visible = false
+            line.Color = getESPColor()
+            line.Thickness = 2
+            line.Transparency = 1
+
+            _G.ESPData.lines[player] = line
+        end
+
+        -- ============================================
+        -- FUNÇÃO PARA APLICAR O ESP ATUAL
+        -- ============================================
+        local function applyCurrentESP()
+            if not _G.ESPData.espEnabled then return end
+
+            -- Ativa para jogadores existentes
+            for _, player in pairs(Players:GetPlayers()) do
+                if _G.ESPData.espType == "Nome + Idade" then
+                    if player.Character then
+                        createNameESP(player)
+                    end
+                elseif _G.ESPData.espType == "Corpo (Highlight)" then
+                    if player.Character then
+                        createHighlightESP(player)
+                    end
+                elseif _G.ESPData.espType == "Linhas" then
+                    createLineESP(player)
+                end
+            end
+
+            -- ============================================
+            -- ATUALIZAÇÃO RGB PARA NOME + IDADE
+            -- ============================================
+            if _G.ESPData.espType == "Nome + Idade" then
+                local rgbConnection = RunService.Heartbeat:Connect(function()
+                    if not _G.ESPData.espEnabled then return end
+                    if _G.ESPData.espType ~= "Nome + Idade" then return end
+                    if _G.ESPData.selectedColor ~= "RGB" then return end
+                    
+                    local newColor = getESPColor()
+                    for player, gui in pairs(_G.ESPData.billboardGuis) do
+                        if gui and gui:FindFirstChild("TextLabel") then
+                            gui.TextLabel.TextColor3 = newColor
+                        end
+                    end
+                end)
+                table.insert(_G.ESPData.connections, rgbConnection)
+
+            -- ============================================
+            -- ATUALIZAÇÃO RGB PARA HIGHLIGHT
+            -- ============================================
+            elseif _G.ESPData.espType == "Corpo (Highlight)" then
+                local rgbConnection = RunService.Heartbeat:Connect(function()
+                    if not _G.ESPData.espEnabled then return end
+                    if _G.ESPData.espType ~= "Corpo (Highlight)" then return end
+                    if _G.ESPData.selectedColor ~= "RGB" then return end
+                    
+                    local newColor = getESPColor()
+                    for player, highlight in pairs(_G.ESPData.highlights) do
+                        if highlight then
+                            highlight.FillColor = newColor
+                        end
+                    end
+                end)
+                table.insert(_G.ESPData.connections, rgbConnection)
+
+            -- ============================================
+            -- ATUALIZAÇÃO CONTÍNUA PARA LINHAS
+            -- ============================================
+            elseif _G.ESPData.espType == "Linhas" then
+                local updateConnection = RunService.RenderStepped:Connect(function()
+                    if not _G.ESPData.espEnabled then return end
+                    if _G.ESPData.espType ~= "Linhas" then return end
+
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player == Players.LocalPlayer then continue end
+                        
+                        local line = _G.ESPData.lines[player]
+                        if not line then continue end
+
+                        local character = player.Character
+                        if character and character:FindFirstChild("HumanoidRootPart") then
+                            local hrp = character.HumanoidRootPart
+                            local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                            
+                            if onScreen then
+                                line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                                line.To = Vector2.new(pos.X, pos.Y)
+                                line.Color = getESPColor()
+                                line.Visible = true
+                            else
+                                line.Visible = false
+                            end
+                        else
+                            line.Visible = false
+                        end
+                    end
+                end)
+                table.insert(_G.ESPData.connections, updateConnection)
+            end
+
+            -- ============================================
+            -- CONEXÕES PARA NOVOS JOGADORES
+            -- ============================================
+            local playerAdded = Players.PlayerAdded:Connect(function(player)
+                if not _G.ESPData.espEnabled then return end
+                
+                local charAddedConn = player.CharacterAdded:Connect(function(character)
+                    if not _G.ESPData.espEnabled then return end
+                    character:WaitForChild("HumanoidRootPart", 5)
+                    task.wait(0.1)
+                    
+                    if _G.ESPData.espType == "Nome + Idade" then
+                        createNameESP(player)
+                    elseif _G.ESPData.espType == "Corpo (Highlight)" then
+                        createHighlightESP(player)
+                    elseif _G.ESPData.espType == "Linhas" then
+                        createLineESP(player)
+                    end
+                end)
+                table.insert(_G.ESPData.connections, charAddedConn)
+                
+                if player.Character then
+                    if _G.ESPData.espType == "Nome + Idade" then
+                        createNameESP(player)
+                    elseif _G.ESPData.espType == "Corpo (Highlight)" then
+                        createHighlightESP(player)
+                    elseif _G.ESPData.espType == "Linhas" then
+                        createLineESP(player)
+                    end
+                end
+            end)
+            table.insert(_G.ESPData.connections, playerAdded)
+
+            local playerRemoving = Players.PlayerRemoving:Connect(function(player)
+                if _G.ESPData.billboardGuis[player] then
+                    _G.ESPData.billboardGuis[player]:Destroy()
+                    _G.ESPData.billboardGuis[player] = nil
+                end
+                if _G.ESPData.highlights[player] then
+                    _G.ESPData.highlights[player]:Destroy()
+                    _G.ESPData.highlights[player] = nil
+                end
+                if _G.ESPData.lines[player] then
+                    _G.ESPData.lines[player]:Remove()
+                    _G.ESPData.lines[player] = nil
+                end
+            end)
+            table.insert(_G.ESPData.connections, playerRemoving)
+        end
+
+        -- Salva a função globalmente para ser usada pelos dropdowns
+        _G.applyCurrentESP = applyCurrentESP
+
+        -- ============================================
+        -- LÓGICA PRINCIPAL DA TOGGLE
+        -- ============================================
+        if _G.ESPData.espEnabled then
+            applyCurrentESP()
+        else
+            clearAllESP()
+        end
+    end
+})
+
+scriptsTab:AddSection({ "Save Server" })
+scriptsTab:AddSection({ "Util Salva Servidores" })
+
+scriptsTab:AddButton({
+    Name = "Save Server",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ShadowsHubseila/Save-server/refs/heads/main/Main%20(4).txt"))()
+    end
+})
+
+scriptsTab:AddSection({ "Fazer Texto Com Item" })
+
+-- Dropdown para escolher o item
+local selectedItem = "Bomb" -- Item padrão
+local textToWrite = ""
+
+scriptsTab:AddDropdown({
+    Name = "Escolher Item",
+    Default = "Bomb",
+    Options = {"Bomb", "BabyBoy", "Box", "Laptop", "Basketball"},
+    Callback = function(value)
+        selectedItem = value
+        print("✅ Item selecionado:", value)
+    end
+})
+
+scriptsTab:AddTextBox({
+    Name = "Digite o Texto",
+    Description = "Texto que será escrito com os itens",
+    PlaceholderText = "Ex: Linux",
+    Callback = function(Value)
+        textToWrite = Value
+        if Value ~= "" then
+            print("📝 Texto definido:", Value)
+        end
+    end
+})
+
+-- Botão para iniciar o processo
+scriptsTab:AddButton({
+    Name = "Iniciar Escrita",
+    Description = "Clique para começar a escrever o texto",
+    Callback = function()
+        -- Verificar se já está rodando
+        if getgenv()._TextWriterRunning then
+            warn("⚠️ Já existe um processo rodando!")
+            return
+        end
+        
+        if textToWrite == "" or textToWrite == nil then
+            warn("⚠️ Digite um texto primeiro!")
+            return
+        end
+        
+        getgenv()._TextWriterRunning = true
+
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local player = Players.LocalPlayer
+
+        -- Mapa de itens para objetos do workspace
+        local ITEM_OBJECTS = {
+            ["Bomb"] = workspace.WorkspaceCom["001_CriminalWeapons"].GiveTools.Bomb,
+            ["BabyBoy"] = workspace.WorkspaceCom["001_GiveTools"].BabyBoy,
+            ["Box"] = workspace.WorkspaceCom["001_GiveTools"].Box,
+            ["Laptop"] = workspace.WorkspaceCom["001_GiveTools"].Laptop,
+            ["Basketball"] = workspace.WorkspaceCom["001_GiveTools"].Basketball
+        }
+
+        -- Mapa de caracteres (pixel art 7x5)
+        local CHAR_MAP = {
+            ["A"] = {"01110","10001","10001","11111","10001","10001","10001"},
+            ["B"] = {"11110","10001","10001","11110","10001","10001","11110"},
+            ["C"] = {"01110","10001","10000","10000","10000","10001","01110"},
+            ["D"] = {"11110","10001","10001","10001","10001","10001","11110"},
+            ["E"] = {"11111","10000","10000","11110","10000","10000","11111"},
+            ["F"] = {"11111","10000","10000","11110","10000","10000","10000"},
+            ["G"] = {"01110","10001","10000","10111","10001","10001","01110"},
+            ["H"] = {"10001","10001","10001","11111","10001","10001","10001"},
+            ["I"] = {"111","010","010","010","010","010","111"},
+            ["J"] = {"00111","00010","00010","00010","10010","10010","01100"},
+            ["K"] = {"10001","10010","10100","11000","10100","10010","10001"},
+            ["L"] = {"10000","10000","10000","10000","10000","10000","11111"},
+            ["M"] = {"10001","11011","10101","10101","10001","10001","10001"},
+            ["N"] = {"10001","11001","10101","10011","10001","10001","10001"},
+            ["O"] = {"01110","10001","10001","10001","10001","10001","01110"},
+            ["P"] = {"11110","10001","10001","11110","10000","10000","10000"},
+            ["Q"] = {"01110","10001","10001","10001","10101","10010","01101"},
+            ["R"] = {"11110","10001","10001","11110","10100","10010","10001"},
+            ["S"] = {"01111","10000","10000","01110","00001","00001","11110"},
+            ["T"] = {"11111","00100","00100","00100","00100","00100","00100"},
+            ["U"] = {"10001","10001","10001","10001","10001","10001","01110"},
+            ["V"] = {"10001","10001","10001","10001","10001","01010","00100"},
+            ["W"] = {"10001","10001","10001","10101","10101","11011","10001"},
+            ["X"] = {"10001","01010","00100","00100","01010","10001","10001"},
+            ["Y"] = {"10001","10001","10001","01010","00100","00100","00100"},
+            ["Z"] = {"11111","00001","00010","00100","01000","10000","11111"},
+            ["0"] = {"01110","10001","10011","10101","11001","10001","01110"},
+            ["1"] = {"00100","01100","00100","00100","00100","00100","01110"},
+            ["2"] = {"01110","10001","00001","00010","00100","01000","11111"},
+            ["3"] = {"11111","00010","00100","00010","00001","10001","01110"},
+            ["4"] = {"00010","00110","01010","10010","11111","00010","00010"},
+            ["5"] = {"11111","10000","11110","00001","00001","10001","01110"},
+            ["6"] = {"00110","01000","10000","11110","10001","10001","01110"},
+            ["7"] = {"11111","00001","00010","00100","01000","10000","10000"},
+            ["8"] = {"01110","10001","10001","01110","10001","10001","01110"},
+            ["9"] = {"01110","10001","10001","01111","00001","00010","01100"},
+            [" "] = {"00000","00000","00000","00000","00000","00000","00000"},
+            ["!"] = {"00100","00100","00100","00100","00100","00000","00100"},
+            ["?"] = {"01110","10001","00001","00010","00100","00000","00100"},
+            ["."] = {"00000","00000","00000","00000","00000","00110","00110"},
+            [","] = {"00000","00000","00000","00000","00000","00100","01000"},
+            [":"] = {"00000","00110","00110","00000","00110","00110","00000"},
+            [";"] = {"00000","00110","00110","00000","00100","01000","00000"},
+            ["-"] = {"00000","00000","00000","11111","00000","00000","00000"},
+            ["+"] = {"00000","00100","00100","11111","00100","00100","00000"},
+            ["="] = {"00000","11111","00000","11111","00000","00000","00000"},
+            ["/"] = {"00001","00010","00100","01000","10000","00000","00000"},
+            ["("] = {"00010","00100","01000","01000","01000","00100","00010"},
+            [")"] = {"01000","00100","00010","00010","00010","00100","01000"},
+            ["*"] = {"00000","00100","10101","01110","10101","00100","00000"},
+            ["%"] = {"11001","11010","00100","01000","10110","10011","00000"},
+            ["@"] = {"01110","10001","10011","10101","10111","10000","01110"},
+            ["#"] = {"01010","01010","11111","01010","11111","01010","01010"},
+            ["$"] = {"00100","01111","10100","01110","00101","11110","00100"},
+            ["&"] = {"01100","10010","10100","01000","10101","10010","01101"},
+            ["'"] = {"00100","00100","00000","00000","00000","00000","00000"},
+            ["_"] = {"00000","00000","00000","00000","00000","00000","11111"},
+        }
+
+        -- Função para contar ferramentas no inventário
+        local function countTools()
+            local total = 0
+            for _, container in ipairs({player.Backpack, player.Character}) do
+                for _, tool in ipairs(container:GetChildren()) do
+                    if tool:IsA("Tool") then 
+                        total += 1 
+                    end
+                end
+            end
+            return total
+        end
+
+        -- Função para calcular quantas ferramentas são necessárias
+        local function countRequiredTools(text)
+            local total = 0
+            local invalidChars = {}
+            
+            for c in text:upper():gmatch(".") do
+                local rows = CHAR_MAP[c]
+                if rows then
+                    for _, row in ipairs(rows) do
+                        total += row:gsub("0", ""):len()
+                    end
+                else
+                    table.insert(invalidChars, c)
+                end
+            end
+            
+            if #invalidChars > 0 then
+                warn("⚠️ Caracteres inválidos encontrados: " .. table.concat(invalidChars, ", "))
+            end
+            
+            return total
+        end
+
+        -- Validação inicial
+        local text = textToWrite:upper()
+        local maxTools = countRequiredTools(text)
+        
+        if maxTools == 0 then
+            warn("❌ Nenhum caractere válido encontrado!")
+            getgenv()._TextWriterRunning = false
+            return
+        end
+
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print("📝 Escrevendo:", text)
+        print("🎯 Item escolhido:", selectedItem)
+        print("🔧 Ferramentas necessárias:", maxTools)
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+        -- Obter posição original do jogador
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+        local originalPosition = hrp.CFrame
+
+        -- Limpar ferramentas existentes
+        print("🧹 Limpando ferramentas antigas...")
+        pcall(function()
+            ReplicatedStorage.RE:FindFirstChild("1Clea1rTool1s"):FireServer("ClearAllTools")
+        end)
+        task.wait(1)
+
+        -- Teleportar para o local do item escolhido
+        print("🚀 Teleportando para coletar ferramentas...")
+        local itemObject = ITEM_OBJECTS[selectedItem]
+        
+        if not itemObject then
+            warn("❌ Item não encontrado no workspace:", selectedItem)
+            getgenv()._TextWriterRunning = false
+            return
+        end
+
+        -- Teleporta para o objeto do item
+        if itemObject:IsA("BasePart") then
+            hrp.CFrame = itemObject.CFrame + Vector3.new(0, 5, 0)
+        elseif itemObject:IsA("Model") and itemObject.PrimaryPart then
+            hrp.CFrame = itemObject.PrimaryPart.CFrame + Vector3.new(0, 5, 0)
+        else
+            -- Tenta encontrar uma parte dentro do objeto
+            local part = itemObject:FindFirstChildWhichIsA("BasePart", true)
+            if part then
+                hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0)
+            end
+        end
+        
+        task.wait(0.5)
+
+        -- Procurar ClickDetector no item
+        local clickDetector = itemObject:FindFirstChildWhichIsA("ClickDetector", true)
+        
+        if not clickDetector then
+            warn("❌ ClickDetector não encontrado no item:", selectedItem)
+            getgenv()._TextWriterRunning = false
+            return
+        end
+
+        -- Coletar ferramentas com progresso
+        print("⏳ Coletando ferramentas (" .. selectedItem .. ")...")
+        local attempts = 0
+        local maxAttempts = maxTools * 3
+        
+        repeat
+            pcall(function()
+                fireclickdetector(clickDetector)
+            end)
+            
+            local current = countTools()
+            if current % 10 == 0 or current == maxTools then
+                print("📦 Progresso: " .. current .. "/" .. maxTools)
+            end
+            
+            attempts += 1
+            if attempts > maxAttempts then
+                warn("❌ Tempo limite atingido ao coletar ferramentas!")
+                getgenv()._TextWriterRunning = false
+                return
+            end
+            
+            task.wait(0.05)
+        until countTools() >= maxTools
+
+        print("✅ Ferramentas coletadas com sucesso!")
+        task.wait(0.5)
+
+        -- Organizar todas as ferramentas
+        print("📋 Organizando ferramentas...")
+        local tools = {}
+        for _, container in ipairs({player.Backpack, player.Character}) do
+            for _, tool in ipairs(container:GetChildren()) do
+                if tool:IsA("Tool") then 
+                    table.insert(tools, tool)
+                end
+            end
+        end
+
+        if #tools < maxTools then
+            warn("❌ Ferramentas insuficientes! Necessário: " .. maxTools .. ", Encontrado: " .. #tools)
+            getgenv()._TextWriterRunning = false
+            return
+        end
+
+        -- Mover todas as ferramentas para o backpack
+        for _, tool in ipairs(player.Character:GetChildren()) do
+            if tool:IsA("Tool") then 
+                tool.Parent = player.Backpack 
+            end
+        end
+
+        task.wait(0.3)
+
+        -- Calcular posições para cada ferramenta
+        print("🧮 Calculando posições do texto...")
+        local gripMap = {}
+        local startPos = Vector3.new(0, -5, 0)
+        local pixelSize = Vector3.new(1.2, 1.2, 0)
+        local toolIndex = 1
+        local offsetX = 0
+
+        for i = 1, #text do
+            local char = text:sub(i, i):upper()
+            local map = CHAR_MAP[char]
+            
+            if map then
+                for y = 1, #map do
+                    for x = 1, #map[y] do
+                        if map[y]:sub(x, x) == "1" then
+                            local tool = tools[toolIndex]
+                            if tool then
+                                gripMap[tool] = CFrame.new(
+                                    startPos.X + (offsetX + x - 1) * pixelSize.X,
+                                    startPos.Y + (y - 1) * pixelSize.Y,
+                                    startPos.Z
+                                )
+                                toolIndex += 1
+                            end
+                        end
+                    end
+                end
+                offsetX += #map[1] + 1
+            end
+        end
+
+        -- Voltar para posição original
+        print("🏠 Voltando para posição original...")
+        hrp.CFrame = originalPosition
+        task.wait(1)
+
+        -- Aplicar as posições
+        print("🎨 Aplicando posições...")
+        for tool, grip in pairs(gripMap) do
+            pcall(function()
+                tool.Grip = grip
+            end)
+        end
+
+        task.wait(1)
+
+        -- Equipar todas as ferramentas
+        print("⚙️ Equipando ferramentas...")
+        for i = 1, maxTools do
+            if tools[i] then
+                pcall(function()
+                    tools[i].Parent = player.Character
+                end)
+            end
+        end
+
+        task.wait(0.5)
+
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print("✨ Texto escrito com sucesso: " .. text)
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        
+        getgenv()._TextWriterRunning = false
+    end
+})
+
+scriptsTab:AddParagraph({"Informação:", "Clique em algum item"})
+scriptsTab:AddParagraph({"Informação:", "depois de escolher clique em escrevet"})
+scriptsTab:AddParagraph({"Informação:", "vc vai começa a escrevet"})
+
+
+local Tab = Window:MakeTab({"Ops", "rbxassetid://6031280882"})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local giveToolsFolder = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools")
+local laptop = giveToolsFolder:FindFirstChild("Laptop")
+if not laptop then
+    warn("Laptop não encontrado!")
+    return
+end
+
+local clickDetector = laptop:FindFirstChildOfClass("ClickDetector")
+local prompt = laptop:FindFirstChildOfClass("ProximityPrompt")
+
+local autoClickEnabled = false
+local weld = nil
+
+local function grudar()
+    if not weld then
+        hrp.CFrame = laptop.CFrame + Vector3.new(0, 2, 0)
+        weld = Instance.new("WeldConstraint")
+        weld.Part0 = hrp
+        weld.Part1 = laptop
+        weld.Parent = hrp
+    end
+end
+
+local function desgrudar()
+    if weld then
+        weld:Destroy()
+        weld = nil
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.03) do
+        if autoClickEnabled then
+            for i = 1, 8 do
+                if clickDetector then
+                    fireclickdetector(clickDetector)
+                elseif prompt then
+                    fireproximityprompt(prompt)
+                else
+                    firetouchinterest(hrp, laptop, 0)
+                    task.wait()
+                    firetouchinterest(hrp, laptop, 1)
+                end
+            end
+        end
+    end
+end)
+
+Tab:AddToggle({
+    Name = "Lag Laptop",
+    Default = false,
+    Callback = function(state)
+        autoClickEnabled = state
+        if state then
+            grudar()
+        else
+            desgrudar()
+        end
+    end
+})
