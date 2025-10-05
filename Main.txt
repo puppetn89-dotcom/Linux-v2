@@ -4154,68 +4154,126 @@ scriptsTab:AddParagraph({"Informação:", "vc vai começa a escrevet"})
 
 local Tab = Window:MakeTab({"Ops", "rbxassetid://6031280882"})
 
+-- Serviços
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
 
-local giveToolsFolder = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools")
-local laptop = giveToolsFolder:FindFirstChild("Laptop")
-if not laptop then
-    warn("Laptop não encontrado!")
-    return
+-- 🔧 FireX
+local giveToolsFireX = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools")
+local fireX = giveToolsFireX:FindFirstChild("FireX")
+if not fireX then warn("FireX não encontrada!") end
+local fireXClick, fireXPrompt = fireX and fireX:FindFirstChildOfClass("ClickDetector"), fireX and fireX:FindFirstChildOfClass("ProximityPrompt")
+local fireXEnabled = false
+local fireXWeld = nil
+local fireXArgs = { [1] = "FireX", [2] = "On" }
+
+local function grudarFireX()
+	if not fireXWeld and fireX then
+		hrp.CFrame = fireX.CFrame + Vector3.new(0,2,0)
+		fireXWeld = Instance.new("WeldConstraint")
+		fireXWeld.Part0 = hrp
+		fireXWeld.Part1 = fireX
+		fireXWeld.Parent = hrp
+	end
 end
 
-local clickDetector = laptop:FindFirstChildOfClass("ClickDetector")
-local prompt = laptop:FindFirstChildOfClass("ProximityPrompt")
-
-local autoClickEnabled = false
-local weld = nil
-
-local function grudar()
-    if not weld then
-        hrp.CFrame = laptop.CFrame + Vector3.new(0, 2, 0)
-        weld = Instance.new("WeldConstraint")
-        weld.Part0 = hrp
-        weld.Part1 = laptop
-        weld.Parent = hrp
-    end
+local function desgrudarFireX()
+	if fireXWeld then
+		fireXWeld:Destroy()
+		fireXWeld = nil
+	end
 end
 
-local function desgrudar()
-    if weld then
-        weld:Destroy()
-        weld = nil
-    end
+-- 🔧 Laptop
+local giveToolsLaptop = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools")
+local laptop = giveToolsLaptop:FindFirstChild("Laptop")
+if not laptop then warn("Laptop não encontrado!") end
+local laptopClick, laptopPrompt = laptop and laptop:FindFirstChildOfClass("ClickDetector"), laptop and laptop:FindFirstChildOfClass("ProximityPrompt")
+local laptopEnabled = false
+local laptopWeld = nil
+
+local function grudarLaptop()
+	if not laptopWeld and laptop then
+		hrp.CFrame = laptop.CFrame + Vector3.new(0,2,0)
+		laptopWeld = Instance.new("WeldConstraint")
+		laptopWeld.Part0 = hrp
+		laptopWeld.Part1 = laptop
+		laptopWeld.Parent = hrp
+	end
 end
 
+local function desgrudarLaptop()
+	if laptopWeld then
+		laptopWeld:Destroy()
+		laptopWeld = nil
+	end
+end
+
+-- 🔁 Loop ultra rápido para os dois
 task.spawn(function()
-    while task.wait(0.03) do
-        if autoClickEnabled then
-            for i = 1, 8 do
-                if clickDetector then
-                    fireclickdetector(clickDetector)
-                elseif prompt then
-                    fireproximityprompt(prompt)
-                else
-                    firetouchinterest(hrp, laptop, 0)
-                    task.wait()
-                    firetouchinterest(hrp, laptop, 1)
-                end
-            end
-        end
-    end
+	while true do
+		if fireXEnabled then
+			grudarFireX()
+			if fireXClick then
+				fireclickdetector(fireXClick)
+			elseif fireXPrompt then
+				fireproximityprompt(fireXPrompt)
+			else
+				firetouchinterest(hrp, fireX, 0)
+				firetouchinterest(hrp, fireX, 1)
+			end
+			-- FireServer
+			local remote
+			if LocalPlayer.Character then
+				local tool = LocalPlayer.Character:FindFirstChild("FireX")
+				if tool then
+					remote = tool:FindFirstChild("ToolSound")
+				end
+			end
+			if remote and remote.FireServer then
+				pcall(function() remote:FireServer(table.unpack(fireXArgs)) end)
+			end
+		end
+
+		if laptopEnabled then
+			grudarLaptop()
+			for i=1,8 do
+				if laptopClick then
+					fireclickdetector(laptopClick)
+				elseif laptopPrompt then
+					fireproximityprompt(laptopPrompt)
+				else
+					firetouchinterest(hrp, laptop, 0)
+					firetouchinterest(hrp, laptop, 1)
+				end
+			end
+		end
+
+		task.wait(0.01)
+	end
 end)
 
+-- 🔘 Toggles
 Tab:AddToggle({
-    Name = "Lag Laptop",
-    Default = false,
-    Callback = function(state)
-        autoClickEnabled = state
-        if state then
-            grudar()
-        else
-            desgrudar()
-        end
-    end
+	Name = "Lag extintor [ N sei se funciona}",
+	Default = false,
+	Callback = function(state)
+		fireXEnabled = state
+		if not state then
+			desgrudarFireX()
+		end
+	end
+})
+
+Tab:AddToggle({
+	Name = "Lag Laptop",
+	Default = false,
+	Callback = function(state)
+		laptopEnabled = state
+		if not state then
+			desgrudarLaptop()
+		end
+	end
 })
