@@ -4334,7 +4334,7 @@ Tab:AddButton({
 })
 
 Tab:AddToggle({
-	Name = "Auto VehicleSeat",
+	Name = "veículos troll players",
 	Default = false,
 	Callback = function(state)
 		isActiveVehicle = state
@@ -4366,7 +4366,7 @@ local remoteDropdown = Tab:AddDropdown({
 })
 
 Tab:AddButton({
-	Name = "Ativar Remote",
+	Name = "pegar carro",
 	Callback = function()
 		if selectedRemoteName then
 			local remoteData = RemoteList[selectedRemoteName]
