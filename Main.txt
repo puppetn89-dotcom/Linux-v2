@@ -4151,7 +4151,6 @@ scriptsTab:AddParagraph({"Informação:", "Clique em algum item"})
 scriptsTab:AddParagraph({"Informação:", "depois de escolher clique em escrevet"})
 scriptsTab:AddParagraph({"Informação:", "vc vai começa a escrevet"})
 
-
 local Tab = Window:MakeTab({"Ops", "rbxassetid://6031280882"})
 
 local Players = game:GetService("Players")
@@ -4228,7 +4227,6 @@ task.spawn(function()
 				pcall(function() remote:FireServer(table.unpack(fireXArgs)) end)
 			end
 		end
-
 		if laptopEnabled and laptop then
 			if not laptopWeld then laptopWeld = grudar(laptop, laptopWeld) end
 			for i = 1, 8 do
@@ -4242,7 +4240,6 @@ task.spawn(function()
 				end
 			end
 		end
-
 		if isActiveVehicle and selectedPlayerName then
 			local targetPlayer = Players:FindFirstChild(selectedPlayerName)
 			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -4252,7 +4249,6 @@ task.spawn(function()
 				end
 			end
 		end
-
 		task.wait(0.01)
 	end
 end)
@@ -4333,7 +4329,7 @@ Tab:AddButton({
 })
 
 Tab:AddToggle({
-	Name = "Mandar carro/barco pro player",
+	Name = "Mandar Carro/Barco pro player",
 	Default = false,
 	Callback = function(state)
 		isActiveVehicle = state
@@ -4357,7 +4353,7 @@ for name, _ in pairs(RemoteList) do
 end
 
 local remoteDropdown = Tab:AddDropdown({
-	Name = "Selecionar carros",
+	Name = "Selecionar Carros",
 	Options = remoteOptions,
 	Default = "",
 	Callback = function(value)
@@ -4366,7 +4362,7 @@ local remoteDropdown = Tab:AddDropdown({
 })
 
 Tab:AddToggle({
-	Name = "ativar carros",
+	Name = "Trollar com carro",
 	Default = false,
 	Callback = function(state)
 		remoteToggle = state
@@ -4404,7 +4400,7 @@ local remoteCoordToggle = false
 local teleportPosition = Vector3.new(1742, -4, -90)
 
 local remoteCoordDropdown = Tab:AddDropdown({
-	Name = "Selecionar Barco",
+	Name = "Selecionar Barcos",
 	Options = remoteCoordOptions,
 	Default = "",
 	Callback = function(value)
@@ -4413,7 +4409,7 @@ local remoteCoordDropdown = Tab:AddDropdown({
 })
 
 Tab:AddToggle({
-	Name = "pegar barco",
+	Name = "Ativar Barcos troll,
 	Default = false,
 	Callback = function(state)
 		remoteCoordToggle = state
