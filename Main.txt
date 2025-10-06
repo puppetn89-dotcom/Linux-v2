@@ -4266,7 +4266,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
 end)
 
 Tab:AddToggle({
-	Name = "🔥 FireX Auto",
+	Name = "FireX Auto",
 	Default = false,
 	Callback = function(state)
 		fireXEnabled = state
@@ -4277,7 +4277,7 @@ Tab:AddToggle({
 })
 
 Tab:AddToggle({
-	Name = "💻 Lag Laptop",
+	Name = "Lag Laptop",
 	Default = false,
 	Callback = function(state)
 		laptopEnabled = state
@@ -4310,21 +4310,20 @@ local killDropdown = Tab:AddDropdown({
 local function UpdateDropdown()
 	local tablePlayers = Players:GetPlayers()
 	local newPlayers = {}
-	if killDropdown then
-		for _, player in ipairs(tablePlayers) do
-			if player.Name ~= LocalPlayer.Name then
-				table.insert(newPlayers, player.Name)
-			end
+	for _, player in ipairs(tablePlayers) do
+		if player.Name ~= LocalPlayer.Name then
+			table.insert(newPlayers, player.Name)
 		end
-		killDropdown:Set(newPlayers)
+	end
+	killDropdown:Set(newPlayers)
+	if selectedPlayerName and Players:FindFirstChild(selectedPlayerName) then
+		killDropdown:SetValue(selectedPlayerName)
+	else
 		selectedPlayerName = nil
 		getgenv().Target = nil
 		killDropdown:SetValue("")
 	end
 end
-
-Players.PlayerAdded:Connect(UpdateDropdown)
-Players.PlayerRemoving:Connect(UpdateDropdown)
 
 Tab:AddButton({
 	Name = "Atualizar Player List",
@@ -4334,7 +4333,7 @@ Tab:AddButton({
 })
 
 Tab:AddToggle({
-	Name = "Auto VehicleSeat",
+	Name = "Mandar carro/barco pro player",
 	Default = false,
 	Callback = function(state)
 		isActiveVehicle = state
@@ -4342,6 +4341,7 @@ Tab:AddToggle({
 })
 
 local selectedRemoteName = nil
+local remoteToggle = false
 
 local RemoteList = {
 	["SchoolBus"] = {"1Ca1r", {"PickingCar", "SchoolBus"}},
@@ -4357,7 +4357,7 @@ for name, _ in pairs(RemoteList) do
 end
 
 local remoteDropdown = Tab:AddDropdown({
-	Name = "Selecionar Veículos",
+	Name = "Selecionar carros",
 	Options = remoteOptions,
 	Default = "",
 	Callback = function(value)
@@ -4365,20 +4365,77 @@ local remoteDropdown = Tab:AddDropdown({
 	end
 })
 
-Tab:AddButton({
-	Name = "Ativar carros trolls",
-	Callback = function()
-		if selectedRemoteName then
-			local remoteData = RemoteList[selectedRemoteName]
-			if remoteData then
-				local remoteName = remoteData[1]
-				local args = remoteData[2]
-				local remote = RemoteFolder:FindFirstChild(remoteName)
-				if remote then
-					remote:FireServer(unpack(args))
+Tab:AddToggle({
+	Name = "ativar carros",
+	Default = false,
+	Callback = function(state)
+		remoteToggle = state
+		task.spawn(function()
+			while remoteToggle do
+				if selectedRemoteName then
+					local remoteData = RemoteList[selectedRemoteName]
+					if remoteData then
+						local remoteName = remoteData[1]
+						local args = remoteData[2]
+						local remote = RemoteFolder:FindFirstChild(remoteName)
+						if remote then
+							remote:FireServer(unpack(args))
+						end
+					end
 				end
+				task.wait(2)
 			end
-		end
+		end)
+	end
+})
+
+local RemoteCoordList = {
+	["Military Boat"] = {"1Ca1r", {"PickingBoat", "MilitaryBoatFree"}},
+	["Pirate Boat"] = {"1Ca1r", {"PickingBoat", "PirateFree"}}
+}
+
+local remoteCoordOptions = {}
+for name, _ in pairs(RemoteCoordList) do
+	table.insert(remoteCoordOptions, name)
+end
+
+local selectedRemoteCoord = nil
+local remoteCoordToggle = false
+local teleportPosition = Vector3.new(1742, -4, -90)
+
+local remoteCoordDropdown = Tab:AddDropdown({
+	Name = "Selecionar Barco",
+	Options = remoteCoordOptions,
+	Default = "",
+	Callback = function(value)
+		selectedRemoteCoord = value
+	end
+})
+
+Tab:AddToggle({
+	Name = "pegar barco",
+	Default = false,
+	Callback = function(state)
+		remoteCoordToggle = state
+		task.spawn(function()
+			while remoteCoordToggle do
+				if selectedRemoteCoord then
+					if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+						LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+					end
+					local remoteData = RemoteCoordList[selectedRemoteCoord]
+					if remoteData then
+						local remoteName = remoteData[1]
+						local args = remoteData[2]
+						local remote = RemoteFolder:FindFirstChild(remoteName)
+						if remote then
+							remote:FireServer(unpack(args))
+						end
+					end
+				end
+				task.wait(2)
+			end
+		end)
 	end
 })
 
@@ -4386,12 +4443,11 @@ local viewPlayerEnabled = false
 local originalCamera = workspace.CurrentCamera.CameraSubject
 
 Tab:AddToggle({
-	Name = "entrar na visão do  Player",
+	Name = "View Player",
 	Default = false,
 	Callback = function(state)
 		viewPlayerEnabled = state
 		local camera = workspace.CurrentCamera
-		
 		if state then
 			if selectedPlayerName then
 				local targetPlayer = Players:FindFirstChild(selectedPlayerName)
