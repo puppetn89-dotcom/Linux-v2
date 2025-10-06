@@ -4334,7 +4334,7 @@ Tab:AddButton({
 })
 
 Tab:AddToggle({
-	Name = "veículos troll players",
+	Name = "Auto VehicleSeat",
 	Default = false,
 	Callback = function(state)
 		isActiveVehicle = state
@@ -4357,7 +4357,7 @@ for name, _ in pairs(RemoteList) do
 end
 
 local remoteDropdown = Tab:AddDropdown({
-	Name = "Selecionar Remote",
+	Name = "Selecionar Veículos",
 	Options = remoteOptions,
 	Default = "",
 	Callback = function(value)
@@ -4366,7 +4366,7 @@ local remoteDropdown = Tab:AddDropdown({
 })
 
 Tab:AddButton({
-	Name = "pegar carro",
+	Name = "Ativar carros trolls",
 	Callback = function()
 		if selectedRemoteName then
 			local remoteData = RemoteList[selectedRemoteName]
@@ -4378,6 +4378,33 @@ Tab:AddButton({
 					remote:FireServer(unpack(args))
 				end
 			end
+		end
+	end
+})
+
+local viewPlayerEnabled = false
+local originalCamera = workspace.CurrentCamera.CameraSubject
+
+Tab:AddToggle({
+	Name = "entrar na visão do  Player",
+	Default = false,
+	Callback = function(state)
+		viewPlayerEnabled = state
+		local camera = workspace.CurrentCamera
+		
+		if state then
+			if selectedPlayerName then
+				local targetPlayer = Players:FindFirstChild(selectedPlayerName)
+				if targetPlayer and targetPlayer.Character then
+					local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+					if humanoid then
+						originalCamera = camera.CameraSubject
+						camera.CameraSubject = humanoid
+					end
+				end
+			end
+		else
+			camera.CameraSubject = originalCamera
 		end
 	end
 })
