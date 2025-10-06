@@ -4151,7 +4151,8 @@ scriptsTab:AddParagraph({"Informação:", "Clique em algum item"})
 scriptsTab:AddParagraph({"Informação:", "depois de escolher clique em escrevet"})
 scriptsTab:AddParagraph({"Informação:", "vc vai começa a escrevet"})
 
-local Tab = Window:MakeTab({"Ops", "rbxassetid://6031280882"})
+
+local Tab = Window:MakeTab({"Op", "rbxassetid://6034509993"})
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -4329,7 +4330,7 @@ Tab:AddButton({
 })
 
 Tab:AddToggle({
-	Name = "Mandar Carro/Barco pro player",
+	Name = "Auto VehicleSeat",
 	Default = false,
 	Callback = function(state)
 		isActiveVehicle = state
@@ -4353,7 +4354,7 @@ for name, _ in pairs(RemoteList) do
 end
 
 local remoteDropdown = Tab:AddDropdown({
-	Name = "Selecionar Carros",
+	Name = "Selecionar Remote",
 	Options = remoteOptions,
 	Default = "",
 	Callback = function(value)
@@ -4362,7 +4363,7 @@ local remoteDropdown = Tab:AddDropdown({
 })
 
 Tab:AddToggle({
-	Name = "Trollar com carro",
+	Name = "Auto Remote",
 	Default = false,
 	Callback = function(state)
 		remoteToggle = state
@@ -4400,7 +4401,7 @@ local remoteCoordToggle = false
 local teleportPosition = Vector3.new(1742, -4, -90)
 
 local remoteCoordDropdown = Tab:AddDropdown({
-	Name = "Selecionar Barcos",
+	Name = "Selecionar Remote + Coord",
 	Options = remoteCoordOptions,
 	Default = "",
 	Callback = function(value)
@@ -4409,7 +4410,7 @@ local remoteCoordDropdown = Tab:AddDropdown({
 })
 
 Tab:AddToggle({
-	Name = "Ativar Barcos troll,
+	Name = "Ativar Remote + Coord",
 	Default = false,
 	Callback = function(state)
 		remoteCoordToggle = state
