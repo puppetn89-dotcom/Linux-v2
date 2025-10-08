@@ -4,7 +4,7 @@ local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Shado
 
 local Window = redzlib:MakeWindow({
   Title = "Linux Hub V2",
-  SubTitle = "Criado Por Shadow/Henrique",
+  SubTitle = "Criado Por Shadow/Troll",
   SaveFolder = "ShadowsHub_Brookhaven"
 })
 
