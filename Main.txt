@@ -4153,475 +4153,6 @@ scriptsTab:AddParagraph({"Informação:", "Clique em algum item"})
 scriptsTab:AddParagraph({"Informação:", "depois de escolher clique em escrevet"})
 scriptsTab:AddParagraph({"Informação:", "vc vai começa a escrevet"})
 
-
-local Tab = Window:MakeTab({"Op", "rbxassetid://6034509993"})
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
-local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RemoteFolder = ReplicatedStorage:WaitForChild("RE")
-
-local fireX = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools"):FindFirstChild("FireX")
-local fireXClick = fireX and fireX:FindFirstChildOfClass("ClickDetector")
-local fireXPrompt = fireX and fireX:FindFirstChildOfClass("ProximityPrompt")
-local fireXEnabled = false
-local fireXWeld = nil
-local fireXArgs = { [1] = "FireX", [2] = "On" }
-
-local laptop = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools"):FindFirstChild("Laptop")
-local laptopClick = laptop and laptop:FindFirstChildOfClass("ClickDetector")
-local laptopPrompt = laptop and laptop:FindFirstChildOfClass("ProximityPrompt")
-local laptopEnabled = false
-local laptopWeld = nil
-
-local vehiclesFolder = workspace:WaitForChild("Vehicles")
-local isActiveVehicle = false
-local selectedPlayerName = nil
-
-local function grudar(part, weldRef)
-	if not weldRef and part then
-		hrp.CFrame = part.CFrame + Vector3.new(0, 2, 0)
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = hrp
-		weld.Part1 = part
-		weld.Parent = hrp
-		return weld
-	end
-end
-
-local function desgrudar(weldRef)
-	if weldRef then
-		weldRef:Destroy()
-		weldRef = nil
-	end
-	return nil
-end
-
-local function getMyVehicleSeat()
-	for _, vehicle in pairs(vehiclesFolder:GetChildren()) do
-		if string.find(vehicle.Name, LocalPlayer.Name) then
-			return vehicle:FindFirstChildWhichIsA("VehicleSeat", true)
-		end
-	end
-	return nil
-end
-
-task.spawn(function()
-	while true do
-		if fireXEnabled and fireX then
-			if not fireXWeld then fireXWeld = grudar(fireX, fireXWeld) end
-			if fireXClick then
-				fireclickdetector(fireXClick)
-			elseif fireXPrompt then
-				fireproximityprompt(fireXPrompt)
-			else
-				firetouchinterest(hrp, fireX, 0)
-				firetouchinterest(hrp, fireX, 1)
-			end
-			local remote
-			if LocalPlayer.Character then
-				local tool = LocalPlayer.Character:FindFirstChild("FireX")
-				if tool then remote = tool:FindFirstChild("ToolSound") end
-			end
-			if remote and remote.FireServer then
-				pcall(function() remote:FireServer(table.unpack(fireXArgs)) end)
-			end
-		end
-		if laptopEnabled and laptop then
-			if not laptopWeld then laptopWeld = grudar(laptop, laptopWeld) end
-			for i = 1, 8 do
-				if laptopClick then
-					fireclickdetector(laptopClick)
-				elseif laptopPrompt then
-					fireproximityprompt(laptopPrompt)
-				else
-					firetouchinterest(hrp, laptop, 0)
-					firetouchinterest(hrp, laptop, 1)
-				end
-			end
-		end
-		if isActiveVehicle and selectedPlayerName then
-			local targetPlayer = Players:FindFirstChild(selectedPlayerName)
-			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-				local seat = getMyVehicleSeat()
-				if seat then
-					seat.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
-				end
-			end
-		end
-		task.wait(0.01)
-	end
-end)
-
-UserInputService.InputBegan:Connect(function(input, processed)
-	if processed then return end
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		if fireXEnabled and fireXClick then fireclickdetector(fireXClick) end
-		if laptopEnabled and laptopClick then fireclickdetector(laptopClick) end
-	end
-end)
-
-Tab:AddToggle({
-	Name = "FireX Auto",
-	Default = false,
-	Callback = function(state)
-		fireXEnabled = state
-		if not state then
-			fireXWeld = desgrudar(fireXWeld)
-		end
-	end
-})
-
-Tab:AddToggle({
-	Name = "Lag Laptop",
-	Default = false,
-	Callback = function(state)
-		laptopEnabled = state
-		if not state then
-			laptopWeld = desgrudar(laptopWeld)
-		end
-	end
-})
-
-local function getPlayerList()
-	local PlayerNames = {}
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player.Name ~= LocalPlayer.Name then
-			table.insert(PlayerNames, player.Name)
-		end
-	end
-	return PlayerNames
-end
-
-local killDropdown = Tab:AddDropdown({
-	Name = "Selecionar Jogador",
-	Options = getPlayerList(),
-	Default = "",
-	Callback = function(value)
-		selectedPlayerName = value
-		getgenv().Target = value
-	end
-})
-
-local function UpdateDropdown()
-	local tablePlayers = Players:GetPlayers()
-	local newPlayers = {}
-	for _, player in ipairs(tablePlayers) do
-		if player.Name ~= LocalPlayer.Name then
-			table.insert(newPlayers, player.Name)
-		end
-	end
-	killDropdown:Set(newPlayers)
-	if selectedPlayerName and Players:FindFirstChild(selectedPlayerName) then
-		killDropdown:SetValue(selectedPlayerName)
-	else
-		selectedPlayerName = nil
-		getgenv().Target = nil
-		killDropdown:SetValue("")
-	end
-end
-
-Tab:AddButton({
-	Name = "Atualizar Player List",
-	Callback = function()
-		UpdateDropdown()
-	end
-})
-
-Tab:AddToggle({
-	Name = "Manda veiculo pro player",
-	Default = false,
-	Callback = function(state)
-		isActiveVehicle = state
-	end
-})
-
-local selectedRemoteName = nil
-local remoteToggle = false
-
-local RemoteList = {
-	["SchoolBus"] = {"1Ca1r", {"PickingCar", "SchoolBus"}},
-	["Van"] = {"1Ca1r", {"PickingCar", "Van"}},
-	["Semi"] = {"1Ca1r", {"PickingCar", "Semi"}},
-	["RV"] = {"1Ca1r", {"PickingCar", "RV"}},
-	["Snowplow"] = {"1Ca1r", {"PickingCar", "Snowplow"}}
-}
-
-local remoteOptions = {}
-for name, _ in pairs(RemoteList) do
-	table.insert(remoteOptions, name)
-end
-
-local remoteDropdown = Tab:AddDropdown({
-	Name = "Selecionar Carros",
-	Options = remoteOptions,
-	Default = "",
-	Callback = function(value)
-		selectedRemoteName = value
-	end
-})
-
-Tab:AddToggle({
-	Name = "Carros troll",
-	Default = false,
-	Callback = function(state)
-		remoteToggle = state
-		task.spawn(function()
-			while remoteToggle do
-				if selectedRemoteName then
-					local remoteData = RemoteList[selectedRemoteName]
-					if remoteData then
-						local remoteName = remoteData[1]
-						local args = remoteData[2]
-						local remote = RemoteFolder:FindFirstChild(remoteName)
-						if remote then
-							remote:FireServer(unpack(args))
-						end
-					end
-				end
-				task.wait(2)
-			end
-		end)
-	end
-})
-
-local RemoteCoordList = {
-	["Military Boat"] = {"1Ca1r", {"PickingBoat", "MilitaryBoatFree"}},
-	["Pirate Boat"] = {"1Ca1r", {"PickingBoat", "PirateFree"}}
-}
-
-local remoteCoordOptions = {}
-for name, _ in pairs(RemoteCoordList) do
-	table.insert(remoteCoordOptions, name)
-end
-
-local selectedRemoteCoord = nil
-local remoteCoordToggle = false
-local teleportPosition = Vector3.new(1742, -4, -90)
-
-local remoteCoordDropdown = Tab:AddDropdown({
-	Name = "Selecionar Barcos",
-	Options = remoteCoordOptions,
-	Default = "",
-	Callback = function(value)
-		selectedRemoteCoord = value
-	end
-})
-
-Tab:AddToggle({
-	Name = "Ativar Barco troll",
-	Default = false,
-	Callback = function(state)
-		remoteCoordToggle = state
-		task.spawn(function()
-			while remoteCoordToggle do
-				if selectedRemoteCoord then
-					if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-						LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
-					end
-					local remoteData = RemoteCoordList[selectedRemoteCoord]
-					if remoteData then
-						local remoteName = remoteData[1]
-						local args = remoteData[2]
-						local remote = RemoteFolder:FindFirstChild(remoteName)
-						if remote then
-							remote:FireServer(unpack(args))
-						end
-					end
-				end
-				task.wait(2)
-			end
-		end)
-	end
-})
-
-local viewPlayerEnabled = false
-local originalCamera = workspace.CurrentCamera.CameraSubject
-
-Tab:AddToggle({
-	Name = "View Player",
-	Default = false,
-	Callback = function(state)
-		viewPlayerEnabled = state
-		local camera = workspace.CurrentCamera
-		if state then
-			if selectedPlayerName then
-				local targetPlayer = Players:FindFirstChild(selectedPlayerName)
-				if targetPlayer and targetPlayer.Character then
-					local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-					if humanoid then
-						originalCamera = camera.CameraSubject
-						camera.CameraSubject = humanoid
-					end
-				end
-			end
-		else
-			camera.CameraSubject = originalCamera
-		end
-	end
-})
-
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local LocalPlayer = Players.LocalPlayer
-
-local selectedPlayerName = nil
-local selectedPlayer = nil
-local singlePlayerActive = false
-local allPlayersActive = false
-local singlePlayerConn = {}
-local allPlayersConnections = {}
-
-local RemoteEvent = ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Playe1rTrigge1rEven1t")
-local ClearToolsEvent = ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Clea1rTool1s")
-
-local function getPlayerList()
-	local list = {}
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			table.insert(list, player.Name)
-		end
-	end
-	return list
-end
-
-local killDropdown = Tab:AddDropdown({
-	Name = "Selecionar Jogador",
-	Options = getPlayerList(),
-	Default = "",
-	Callback = function(value)
-		selectedPlayerName = value
-		selectedPlayer = Players:FindFirstChild(value)
-	end
-})
-
-local function UpdateDropdown()
-	local newPlayers = getPlayerList()
-	if killDropdown then
-		killDropdown:Set(newPlayers)
-		selectedPlayerName = nil
-		selectedPlayer = nil
-		killDropdown:SetValue("")
-	end
-end
-
-Tab:AddButton({
-	Name = "Atualizar Player List",
-	Callback = UpdateDropdown
-})
-
-local function fastRemote(tool, targetPlayer)
-	if not tool or not tool:IsA("Tool") or not targetPlayer then return end
-	if not singlePlayerActive and not allPlayersActive then return end
-	for i = 1, 3 do
-		task.spawn(function()
-			RemoteEvent:FireServer("AcceptedToolToServer", tool.Name, targetPlayer)
-		end)
-	end
-	task.spawn(function()
-		ClearToolsEvent:FireServer("ClearAllTools")
-	end)
-end
-
-local function disconnectConnections(tbl)
-	for _, conns in pairs(tbl) do
-		for _, conn in ipairs(conns) do
-			if conn.Connected then conn:Disconnect() end
-		end
-	end
-	table.clear(tbl)
-end
-
-local function scanTools(player, char)
-	for _, child in ipairs(char:GetChildren()) do
-		if child:IsA("Tool") then
-			task.spawn(fastRemote, child, player)
-		end
-	end
-end
-
-local function monitorSinglePlayer(player)
-	if player == LocalPlayer then return end
-	if singlePlayerConn[player] then return end
-
-	local connections = {}
-	singlePlayerConn[player] = connections
-
-	if player.Character then
-		scanTools(player, player.Character)
-		table.insert(connections, player.Character.ChildAdded:Connect(function(tool)
-			if singlePlayerActive and tool:IsA("Tool") then
-				fastRemote(tool, player)
-			end
-		end))
-	end
-
-	table.insert(connections, player.CharacterAdded:Connect(function(char)
-		scanTools(player, char)
-		table.insert(connections, char.ChildAdded:Connect(function(tool)
-			if singlePlayerActive and tool:IsA("Tool") then
-				fastRemote(tool, player)
-			end
-		end))
-	end))
-end
-
-local function monitorAllPlayers(player)
-	if player == LocalPlayer then return end
-	if allPlayersConnections[player] then return end
-
-	local connections = {}
-	allPlayersConnections[player] = connections
-
-	if player.Character then
-		scanTools(player, player.Character)
-		table.insert(connections, player.Character.ChildAdded:Connect(function(tool)
-			if allPlayersActive and tool:IsA("Tool") then
-				fastRemote(tool, player)
-			end
-		end))
-	end
-
-	table.insert(connections, player.CharacterAdded:Connect(function(char)
-		scanTools(player, char)
-		table.insert(connections, char.ChildAdded:Connect(function(tool)
-			if allPlayersActive and tool:IsA("Tool") then
-				fastRemote(tool, player)
-			end
-		end))
-	end))
-end
-
-Tab:AddToggle({
-	Name = "Remover a Tool do Player Selecionado",
-	Default = false,
-	Callback = function(state)
-		singlePlayerActive = state
-		disconnectConnections(singlePlayerConn)
-		if state and selectedPlayer then
-			monitorSinglePlayer(selectedPlayer)
-		end
-	end
-})
-
-Tab:AddToggle({
-	Name = "Remover a Tool de Todos os Players",
-	Default = false,
-	Callback = function(state)
-		allPlayersActive = state
-		disconnectConnections(allPlayersConnections)
-		if state then
-			for _, player in ipairs(Players:GetPlayers()) do
-				monitorAllPlayers(player)
-			end
-		end
-	end
-})
-
-
 local Tab = Window:MakeTab({"Protection", "rbxassetid://11322093465"})
 
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -8464,3 +7995,471 @@ flingsTab:AddButton({
         SendNotification("Fling All TowTruck", "✅ Concluído! " .. flinged .. " jogadores flingados")
     end
 })
+
+local Tab = Window:MakeTab({"Troll", "rbxassetid://140731226103831"})
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RemoteFolder = ReplicatedStorage:WaitForChild("RE")
+
+local fireX = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools"):FindFirstChild("FireX")
+local fireXClick = fireX and fireX:FindFirstChildOfClass("ClickDetector")
+local fireXPrompt = fireX and fireX:FindFirstChildOfClass("ProximityPrompt")
+local fireXEnabled = false
+local fireXWeld = nil
+local fireXArgs = { [1] = "FireX", [2] = "On" }
+
+local laptop = workspace:WaitForChild("WorkspaceCom"):WaitForChild("001_GiveTools"):FindFirstChild("Laptop")
+local laptopClick = laptop and laptop:FindFirstChildOfClass("ClickDetector")
+local laptopPrompt = laptop and laptop:FindFirstChildOfClass("ProximityPrompt")
+local laptopEnabled = false
+local laptopWeld = nil
+
+local vehiclesFolder = workspace:WaitForChild("Vehicles")
+local isActiveVehicle = false
+local selectedPlayerName = nil
+
+local function grudar(part, weldRef)
+	if not weldRef and part then
+		hrp.CFrame = part.CFrame + Vector3.new(0, 2, 0)
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = hrp
+		weld.Part1 = part
+		weld.Parent = hrp
+		return weld
+	end
+end
+
+local function desgrudar(weldRef)
+	if weldRef then
+		weldRef:Destroy()
+		weldRef = nil
+	end
+	return nil
+end
+
+local function getMyVehicleSeat()
+	for _, vehicle in pairs(vehiclesFolder:GetChildren()) do
+		if string.find(vehicle.Name, LocalPlayer.Name) then
+			return vehicle:FindFirstChildWhichIsA("VehicleSeat", true)
+		end
+	end
+	return nil
+end
+
+task.spawn(function()
+	while true do
+		if fireXEnabled and fireX then
+			if not fireXWeld then fireXWeld = grudar(fireX, fireXWeld) end
+			if fireXClick then
+				fireclickdetector(fireXClick)
+			elseif fireXPrompt then
+				fireproximityprompt(fireXPrompt)
+			else
+				firetouchinterest(hrp, fireX, 0)
+				firetouchinterest(hrp, fireX, 1)
+			end
+			local remote
+			if LocalPlayer.Character then
+				local tool = LocalPlayer.Character:FindFirstChild("FireX")
+				if tool then remote = tool:FindFirstChild("ToolSound") end
+			end
+			if remote and remote.FireServer then
+				pcall(function() remote:FireServer(table.unpack(fireXArgs)) end)
+			end
+		end
+		if laptopEnabled and laptop then
+			if not laptopWeld then laptopWeld = grudar(laptop, laptopWeld) end
+			for i = 1, 8 do
+				if laptopClick then
+					fireclickdetector(laptopClick)
+				elseif laptopPrompt then
+					fireproximityprompt(laptopPrompt)
+				else
+					firetouchinterest(hrp, laptop, 0)
+					firetouchinterest(hrp, laptop, 1)
+				end
+			end
+		end
+		if isActiveVehicle and selectedPlayerName then
+			local targetPlayer = Players:FindFirstChild(selectedPlayerName)
+			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				local seat = getMyVehicleSeat()
+				if seat then
+					seat.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+				end
+			end
+		end
+		task.wait(0.01)
+	end
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then return end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if fireXEnabled and fireXClick then fireclickdetector(fireXClick) end
+		if laptopEnabled and laptopClick then fireclickdetector(laptopClick) end
+	end
+end)
+
+Tab:AddToggle({
+	Name = "FireX Auto",
+	Default = false,
+	Callback = function(state)
+		fireXEnabled = state
+		if not state then
+			fireXWeld = desgrudar(fireXWeld)
+		end
+	end
+})
+
+Tab:AddToggle({
+	Name = "Lag Laptop",
+	Default = false,
+	Callback = function(state)
+		laptopEnabled = state
+		if not state then
+			laptopWeld = desgrudar(laptopWeld)
+		end
+	end
+})
+
+local function getPlayerList()
+	local PlayerNames = {}
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Name ~= LocalPlayer.Name then
+			table.insert(PlayerNames, player.Name)
+		end
+	end
+	return PlayerNames
+end
+
+local killDropdown = Tab:AddDropdown({
+	Name = "Selecionar Jogador",
+	Options = getPlayerList(),
+	Default = "",
+	Callback = function(value)
+		selectedPlayerName = value
+		getgenv().Target = value
+	end
+})
+
+local function UpdateDropdown()
+	local tablePlayers = Players:GetPlayers()
+	local newPlayers = {}
+	for _, player in ipairs(tablePlayers) do
+		if player.Name ~= LocalPlayer.Name then
+			table.insert(newPlayers, player.Name)
+		end
+	end
+	killDropdown:Set(newPlayers)
+	if selectedPlayerName and Players:FindFirstChild(selectedPlayerName) then
+		killDropdown:SetValue(selectedPlayerName)
+	else
+		selectedPlayerName = nil
+		getgenv().Target = nil
+		killDropdown:SetValue("")
+	end
+end
+
+Tab:AddButton({
+	Name = "Atualizar Player List",
+	Callback = function()
+		UpdateDropdown()
+	end
+})
+
+Tab:AddToggle({
+	Name = "Manda veiculo pro player",
+	Default = false,
+	Callback = function(state)
+		isActiveVehicle = state
+	end
+})
+
+local selectedRemoteName = nil
+local remoteToggle = false
+
+local RemoteList = {
+	["SchoolBus"] = {"1Ca1r", {"PickingCar", "SchoolBus"}},
+	["Van"] = {"1Ca1r", {"PickingCar", "Van"}},
+	["Semi"] = {"1Ca1r", {"PickingCar", "Semi"}},
+	["RV"] = {"1Ca1r", {"PickingCar", "RV"}},
+	["Snowplow"] = {"1Ca1r", {"PickingCar", "Snowplow"}}
+}
+
+local remoteOptions = {}
+for name, _ in pairs(RemoteList) do
+	table.insert(remoteOptions, name)
+end
+
+local remoteDropdown = Tab:AddDropdown({
+	Name = "Selecionar Carros",
+	Options = remoteOptions,
+	Default = "",
+	Callback = function(value)
+		selectedRemoteName = value
+	end
+})
+
+Tab:AddToggle({
+	Name = "Carros troll",
+	Default = false,
+	Callback = function(state)
+		remoteToggle = state
+		task.spawn(function()
+			while remoteToggle do
+				if selectedRemoteName then
+					local remoteData = RemoteList[selectedRemoteName]
+					if remoteData then
+						local remoteName = remoteData[1]
+						local args = remoteData[2]
+						local remote = RemoteFolder:FindFirstChild(remoteName)
+						if remote then
+							remote:FireServer(unpack(args))
+						end
+					end
+				end
+				task.wait(2)
+			end
+		end)
+	end
+})
+
+local RemoteCoordList = {
+	["Military Boat"] = {"1Ca1r", {"PickingBoat", "MilitaryBoatFree"}},
+	["Pirate Boat"] = {"1Ca1r", {"PickingBoat", "PirateFree"}}
+}
+
+local remoteCoordOptions = {}
+for name, _ in pairs(RemoteCoordList) do
+	table.insert(remoteCoordOptions, name)
+end
+
+local selectedRemoteCoord = nil
+local remoteCoordToggle = false
+local teleportPosition = Vector3.new(1742, -4, -90)
+
+local remoteCoordDropdown = Tab:AddDropdown({
+	Name = "Selecionar Barcos",
+	Options = remoteCoordOptions,
+	Default = "",
+	Callback = function(value)
+		selectedRemoteCoord = value
+	end
+})
+
+Tab:AddToggle({
+	Name = "Ativar Barco troll",
+	Default = false,
+	Callback = function(state)
+		remoteCoordToggle = state
+		task.spawn(function()
+			while remoteCoordToggle do
+				if selectedRemoteCoord then
+					if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+						LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+					end
+					local remoteData = RemoteCoordList[selectedRemoteCoord]
+					if remoteData then
+						local remoteName = remoteData[1]
+						local args = remoteData[2]
+						local remote = RemoteFolder:FindFirstChild(remoteName)
+						if remote then
+							remote:FireServer(unpack(args))
+						end
+					end
+				end
+				task.wait(2)
+			end
+		end)
+	end
+})
+
+local viewPlayerEnabled = false
+local originalCamera = workspace.CurrentCamera.CameraSubject
+
+Tab:AddToggle({
+	Name = "View Player",
+	Default = false,
+	Callback = function(state)
+		viewPlayerEnabled = state
+		local camera = workspace.CurrentCamera
+		if state then
+			if selectedPlayerName then
+				local targetPlayer = Players:FindFirstChild(selectedPlayerName)
+				if targetPlayer and targetPlayer.Character then
+					local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+					if humanoid then
+						originalCamera = camera.CameraSubject
+						camera.CameraSubject = humanoid
+					end
+				end
+			end
+		else
+			camera.CameraSubject = originalCamera
+		end
+	end
+})
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+local selectedPlayerName = nil
+local selectedPlayer = nil
+local singlePlayerActive = false
+local allPlayersActive = false
+local singlePlayerConn = {}
+local allPlayersConnections = {}
+
+local RemoteEvent = ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Playe1rTrigge1rEven1t")
+local ClearToolsEvent = ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Clea1rTool1s")
+
+local function getPlayerList()
+	local list = {}
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			table.insert(list, player.Name)
+		end
+	end
+	return list
+end
+
+local killDropdown = Tab:AddDropdown({
+	Name = "Selecionar Jogador",
+	Options = getPlayerList(),
+	Default = "",
+	Callback = function(value)
+		selectedPlayerName = value
+		selectedPlayer = Players:FindFirstChild(value)
+	end
+})
+
+local function UpdateDropdown()
+	local newPlayers = getPlayerList()
+	if killDropdown then
+		killDropdown:Set(newPlayers)
+		selectedPlayerName = nil
+		selectedPlayer = nil
+		killDropdown:SetValue("")
+	end
+end
+
+Tab:AddButton({
+	Name = "Atualizar Player List",
+	Callback = UpdateDropdown
+})
+
+local function fastRemote(tool, targetPlayer)
+	if not tool or not tool:IsA("Tool") or not targetPlayer then return end
+	if not singlePlayerActive and not allPlayersActive then return end
+	for i = 1, 3 do
+		task.spawn(function()
+			RemoteEvent:FireServer("AcceptedToolToServer", tool.Name, targetPlayer)
+		end)
+	end
+	task.spawn(function()
+		ClearToolsEvent:FireServer("ClearAllTools")
+	end)
+end
+
+local function disconnectConnections(tbl)
+	for _, conns in pairs(tbl) do
+		for _, conn in ipairs(conns) do
+			if conn.Connected then conn:Disconnect() end
+		end
+	end
+	table.clear(tbl)
+end
+
+local function scanTools(player, char)
+	for _, child in ipairs(char:GetChildren()) do
+		if child:IsA("Tool") then
+			task.spawn(fastRemote, child, player)
+		end
+	end
+end
+
+local function monitorSinglePlayer(player)
+	if player == LocalPlayer then return end
+	if singlePlayerConn[player] then return end
+
+	local connections = {}
+	singlePlayerConn[player] = connections
+
+	if player.Character then
+		scanTools(player, player.Character)
+		table.insert(connections, player.Character.ChildAdded:Connect(function(tool)
+			if singlePlayerActive and tool:IsA("Tool") then
+				fastRemote(tool, player)
+			end
+		end))
+	end
+
+	table.insert(connections, player.CharacterAdded:Connect(function(char)
+		scanTools(player, char)
+		table.insert(connections, char.ChildAdded:Connect(function(tool)
+			if singlePlayerActive and tool:IsA("Tool") then
+				fastRemote(tool, player)
+			end
+		end))
+	end))
+end
+
+local function monitorAllPlayers(player)
+	if player == LocalPlayer then return end
+	if allPlayersConnections[player] then return end
+
+	local connections = {}
+	allPlayersConnections[player] = connections
+
+	if player.Character then
+		scanTools(player, player.Character)
+		table.insert(connections, player.Character.ChildAdded:Connect(function(tool)
+			if allPlayersActive and tool:IsA("Tool") then
+				fastRemote(tool, player)
+			end
+		end))
+	end
+
+	table.insert(connections, player.CharacterAdded:Connect(function(char)
+		scanTools(player, char)
+		table.insert(connections, char.ChildAdded:Connect(function(tool)
+			if allPlayersActive and tool:IsA("Tool") then
+				fastRemote(tool, player)
+			end
+		end))
+	end))
+end
+
+Tab:AddToggle({
+	Name = "Remover a Tool do Player Selecionado",
+	Default = false,
+	Callback = function(state)
+		singlePlayerActive = state
+		disconnectConnections(singlePlayerConn)
+		if state and selectedPlayer then
+			monitorSinglePlayer(selectedPlayer)
+		end
+	end
+})
+
+Tab:AddToggle({
+	Name = "Remover a Tool de Todos os Players",
+	Default = false,
+	Callback = function(state)
+		allPlayersActive = state
+		disconnectConnections(allPlayersConnections)
+		if state then
+			for _, player in ipairs(Players:GetPlayers()) do
+				monitorAllPlayers(player)
+			end
+		end
+	end
+})
+
