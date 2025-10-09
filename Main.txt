@@ -8463,6 +8463,49 @@ Tab:AddToggle({
 	end
 })
 
+Tab:AddSection({"Trocar área da escola "})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local buttons = {
+	["Basquete"] = workspace.WorkspaceCom["001_SchoolGym"].SchoolGym1Buttons.SchoolGym1,
+	["Baile"] = workspace.WorkspaceCom["001_SchoolGym"].SchoolGym1Buttons.SchoolGym2,
+	["Reunião"] = workspace.WorkspaceCom["001_SchoolGym"].SchoolGym1Buttons.SchoolGym3,
+	["Ginástica"] = workspace.WorkspaceCom["001_SchoolGym"].SchoolGym1Buttons.SchoolGym4,
+	["Piscina"] = workspace.WorkspaceCom["001_SchoolGym"].SchoolGym1Buttons.SchoolGym5
+}
+
+local function clickButton(button)
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	hrp.CFrame = button.CFrame + Vector3.new(0, 3, 0)
+	task.wait(0.5)
+	local click = button:FindFirstChildOfClass("ClickDetector")
+	if click then
+		fireclickdetector(click)
+	end
+end
+
+for name, button in pairs(buttons) do
+	local toggleEnabled = false
+	Tab:AddToggle({
+		Name = name,
+		Default = false,
+		Callback = function(state)
+			toggleEnabled = state
+			if state then
+				task.spawn(function()
+					while toggleEnabled do
+						clickButton(button)
+						task.wait(0.1)
+					end
+				end)
+			end
+		end
+	})
+end
+
 local Tab = Window:MakeTab({"Musica", "rbxassetid://111911979482253"})
 
 Tab:AddSection({"Musica"})
