@@ -8506,6 +8506,62 @@ for name, button in pairs(buttons) do
 	})
 end
 
+Tab:AddSection({"Mudar os quadros"})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local targetPos = Vector3.new(-386, 4, 180)
+local remoteArg3 = "sl"
+local args = {
+    [1] = "ReturningBoardName",
+    [2] = workspace.WorkspaceCom:FindFirstChild("001_School").SchoolDryBoard.Words.Count,
+    [3] = remoteArg3
+}
+local remote = ReplicatedStorage.RE:FindFirstChild("1Schoo1lDr1yBoard1s")
+
+local function teleportAndFireOnce()
+    if not LocalPlayer.Character or not LocalPlayer.Character.Parent then
+        LocalPlayer.CharacterAdded:Wait()
+    end
+    local char = LocalPlayer.Character
+    local hrp = char:WaitForChild("HumanoidRootPart", 5)
+    if not hrp then return end
+    hrp.CFrame = CFrame.new(targetPos)
+    task.wait(0.2)
+    args[3] = remoteArg3
+    if remote then
+        remote:FireServer(unpack(args))
+    end
+end
+
+local toggleEnabled = false
+Tab:AddToggle({
+    Name = "Spam no quadro 1",
+    Default = false,
+    Callback = function(state)
+        toggleEnabled = state
+        if state then
+            task.spawn(function()
+                while toggleEnabled do
+                    teleportAndFireOnce()
+                    task.wait(1)
+                end
+            end)
+        end
+    end
+})
+
+Tab:AddTextBox({
+    Name = "Spam quadro 1",
+    Description = "colocar frases no quadro 1",
+    PlaceholderText = "Linux",
+    Callback = function(Value)
+        remoteArg3 = Value
+    end
+})
+
 local Tab = Window:MakeTab({"Musica", "rbxassetid://111911979482253"})
 
 Tab:AddSection({"Musica"})
