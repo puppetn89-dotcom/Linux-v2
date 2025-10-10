@@ -8562,6 +8562,101 @@ Tab:AddTextBox({
     end
 })
 
+Tab:AddSection({"spam convite"})
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+local selectedPlayerName
+local selectedPlayerUserId
+local isActiveVehicle = false
+
+local function getPlayerList()
+    local PlayerNames = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Name ~= LocalPlayer.Name then
+            table.insert(PlayerNames, player.Name)
+        end
+    end
+    return PlayerNames
+end
+
+local killDropdown = Tab:AddDropdown({
+    Name = "Selecionar Jogador",
+    Options = getPlayerList(),
+    Default = "",
+    Callback = function(value)
+        selectedPlayerName = value
+        local player = Players:FindFirstChild(value)
+        if player then
+            selectedPlayerUserId = player.UserId
+            getgenv().Target = player
+        else
+            selectedPlayerUserId = nil
+            getgenv().Target = nil
+        end
+    end
+})
+
+local function UpdateDropdown()
+    local tablePlayers = Players:GetPlayers()
+    local newPlayers = {}
+    for _, player in ipairs(tablePlayers) do
+        if player.Name ~= LocalPlayer.Name then
+            table.insert(newPlayers, player.Name)
+        end
+    end
+    killDropdown:Set(newPlayers)
+    if selectedPlayerName and Players:FindFirstChild(selectedPlayerName) then
+        killDropdown:SetValue(selectedPlayerName)
+    else
+        selectedPlayerName = nil
+        selectedPlayerUserId = nil
+        getgenv().Target = nil
+        killDropdown:SetValue("")
+    end
+end
+
+Tab:AddButton({
+    Name = "Atualizar Player List",
+    Callback = function()
+        UpdateDropdown()
+    end
+})
+
+Tab:AddToggle({
+    Name = "Spam de convite pro player",
+    Default = false,
+    Callback = function(state)
+        isActiveVehicle = state
+        if state then
+            spawn(function()
+                while isActiveVehicle do
+                    if selectedPlayerUserId then
+                        local args1 = {
+                            [1] = "uiInteraction",
+                            [2] = { ["buttonName"] = "FamilyButton" }
+                        }
+                        ReplicatedStorage.Remotes.TelemetryClientInteraction:FireServer(unpack(args1))
+                        ReplicatedStorage.Remotes.CreateFamily:FireServer()
+                        local args2 = {
+                            [1] = selectedPlayerUserId,
+                            [2] = "FamilyInviteMenu"
+                        }
+                        ReplicatedStorage.Remotes.InvitePlayerToFamily:FireServer(unpack(args2))
+                        local args3 = {
+                            [1] = {0,0,0,0,0,0}
+                        }
+                        ReplicatedStorage.Remotes.ChangeCharacterBody:InvokeServer(unpack(args3))
+                    end
+                    wait(1)
+                end
+            end)
+        end
+    end
+})
+
 local Tab = Window:MakeTab({"Musica", "rbxassetid://111911979482253"})
 
 Tab:AddSection({"Musica"})
