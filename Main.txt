@@ -8756,6 +8756,98 @@ Tab:AddToggle({
     end
 })
 
+local Section = flingsTab:AddSection({"Se quiser trocar a skybox, apenas mude sua camisa"})
+
+local SkyboxActive = false
+local CurrentTrack = nil
+local RigidTrack = nil
+
+flingsTab:AddButton({
+   Name = "Skybox FE",
+   Callback = function()
+        if SkyboxActive then
+            if CurrentTrack then
+                CurrentTrack:Stop(0.1)
+                CurrentTrack = nil
+            end
+            if RigidTrack then
+                RigidTrack:Stop(0.1)
+                RigidTrack = nil
+            end
+            game:GetService("ReplicatedStorage").Remotes.ResetCharacterAppearance:FireServer()
+            task.wait(0.3)
+            local player = game:GetService("Players").LocalPlayer
+            local character = player.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.Health = 0
+                end
+            end
+            SkyboxActive = false
+        else
+            local args = {{100839513065432}}
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ChangeCharacterBody"):InvokeServer(unpack(args))
+            local function missing(t, f, fallback)
+                if type(f) == t then return f end
+                return fallback 
+            end
+            cloneref = missing("function", cloneref, function(...) return ... end)
+            local Services = setmetatable({}, {
+                __index = function(_, name)
+                    return cloneref(game:GetService(name))
+                end
+            })
+            local Players = Services.Players
+            local player = Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:WaitForChild("Humanoid")
+            local Settings = {}
+            Settings["Fade In"]     = 0.1
+            Settings["Fade Out"]    = 0.1
+            Settings["Weight"]      = 1
+            Settings["Speed"]       = 1
+            Settings["Time Position"] = 0
+            local function LoadTrack(id)
+                local animId
+                local ok, result = pcall(function()
+                    return game:GetObjects("rbxassetid://" .. tostring(id))
+                end)
+                if ok and result and #result > 0 then
+                    local anim = result[1]
+                    if anim:IsA("Animation") then
+                        animId = anim.AnimationId
+                    else
+                        animId = "rbxassetid://" .. tostring(id)
+                    end
+                else
+                    animId = "rbxassetid://" .. tostring(id)
+                end
+                local newAnim = Instance.new("Animation")
+                newAnim.AnimationId = animId
+                local newTrack = humanoid:LoadAnimation(newAnim)
+                newTrack.Priority = Enum.AnimationPriority.Action4
+                local weight = Settings["Weight"]
+                if weight == 0 then weight = 0.001 end
+                newTrack:Play(Settings["Fade In"], weight, Settings["Speed"])
+                CurrentTrack = newTrack
+                CurrentTrack.TimePosition = math.clamp(Settings["Time Position"], 0, 1) * CurrentTrack.Length
+                return newTrack
+            end
+            local EmoteId = 101852027997337
+            LoadTrack(EmoteId)
+            task.wait(0.5)
+            local PlankingId = "rbxassetid://3695333486"
+            local plankAnim = Instance.new("Animation")
+            plankAnim.AnimationId = PlankingId
+            RigidTrack = humanoid:LoadAnimation(plankAnim)
+            RigidTrack.Priority = Enum.AnimationPriority.Movement
+            RigidTrack:Play(0.1, 1, 0)
+            SkyboxActive = true
+        end
+    end
+})
+
 
 local Tab = Window:MakeTab({"Musica", "rbxassetid://111911979482253"})
 
