@@ -7996,6 +7996,99 @@ flingsTab:AddButton({
     end
 })
 
+flingsTab:AddSection({ "Bugs Players" })
+
+flingsTab:AddDropdown({
+    Name = "Selecionar Jogador",
+    Options = (function()
+        local PlayerNames = {}
+        for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+            if player.Name ~= game:GetService("Players").LocalPlayer.Name then
+                table.insert(PlayerNames, player.Name)
+            end
+        end
+        return PlayerNames
+    end)(),
+    Default = "",
+    Callback = function(value)
+        if not _G.SelectedPlayers then _G.SelectedPlayers = {} end
+        local player = game:GetService("Players"):FindFirstChild(value)
+        if player then
+            _G.SelectedPlayers[player.Name] = true
+        else
+            _G.SelectedPlayers[value] = nil
+        end
+    end
+})
+
+flingsTab:AddButton({
+    Name = "Atualizar Player List",
+    Callback = function()
+        local dropdown = flingsTab:FindFirstChild("Selecionar Jogador")
+        if dropdown then
+            local PlayerNames = {}
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player.Name ~= game:GetService("Players").LocalPlayer.Name then
+                    table.insert(PlayerNames, player.Name)
+                end
+            end
+            dropdown:Set(PlayerNames)
+        end
+    end
+})
+
+flingsTab:AddToggle({
+    Name = "Ativar Anti reset Player",
+    Default = false,
+    Callback = function(state)
+        if state then
+            local Players = game:GetService("Players")
+            local ReplicatedStorage = game:GetService("ReplicatedStorage")
+            local RunService = game:GetService("RunService")
+            local LocalPlayer = Players.LocalPlayer
+            if not _G.SelectedPlayers then _G.SelectedPlayers = {} end
+            local Remote = ReplicatedStorage.RE:FindFirstChild("1Gu1n")
+            if not Remote then return end
+            local selectedPlayersList = {}
+            for playerName, _ in pairs(_G.SelectedPlayers) do
+                local player = Players:FindFirstChild(playerName)
+                if player then table.insert(selectedPlayersList, player) end
+            end
+            local index = 1
+            _G.BugConnection = RunService.Stepped:Connect(function()
+                if #selectedPlayersList < 1 then return end
+                index = index + 1
+                if index > #selectedPlayersList then index = 1 end
+                local target = selectedPlayersList[index]
+                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                    local crazyVector = Vector3.new(math.random(1e7, 1e7), math.random(1e7, 1e7), math.random(1e7, 1e7))
+                    local args = {
+                        [1] = target.Character.HumanoidRootPart,
+                        [2] = target.Character.HumanoidRootPart,
+                        [3] = crazyVector,
+                        [4] = target.Character.HumanoidRootPart.Position,
+                        [5] = LocalPlayer.Backpack:FindFirstChild("Assault") and LocalPlayer.Backpack.Assault.GunScript_Local:FindFirstChild("MuzzleEffect"),
+                        [6] = LocalPlayer.Backpack:FindFirstChild("Assault") and LocalPlayer.Backpack.Assault.GunScript_Local:FindFirstChild("HitEffect"),
+                        [7] = 10000,
+                        [8] = 10000,
+                        [9] = { [1] = false },
+                        [10] = { [1] = 10000, [2] = Vector3.new(3000,3000,3000), [3] = BrickColor.new(29), [4] = 0.05, [5] = Enum.Material.SmoothPlastic, [6] = 0.05 },
+                        [11] = true,
+                        [12] = false
+                    }
+                    Remote:FireServer(unpack(args))
+                end
+            end)
+        else
+            if _G.BugConnection then
+                _G.BugConnection:Disconnect()
+                _G.BugConnection = nil
+            end
+        end
+    end
+})
+
+
 local Tab = Window:MakeTab({"Troll", "rbxassetid://140731226103831"})
 
 local Players = game:GetService("Players")
@@ -8626,12 +8719,13 @@ Tab:AddButton({
 })
 
 Tab:AddToggle({
-    Name = "Spam de convite pro player",
+    Name = "spam convite family pro player",
     Default = false,
     Callback = function(state)
         isActiveVehicle = state
         if state then
             spawn(function()
+                local lastLeaveTime = tick()
                 while isActiveVehicle do
                     if selectedPlayerUserId then
                         local args1 = {
@@ -8649,6 +8743,11 @@ Tab:AddToggle({
                             [1] = {0,0,0,0,0,0}
                         }
                         ReplicatedStorage.Remotes.ChangeCharacterBody:InvokeServer(unpack(args3))
+
+                        if tick() - lastLeaveTime >= 6 then
+                            ReplicatedStorage.Remotes.LeaveFamily:FireServer()
+                            lastLeaveTime = tick()
+                        end
                     end
                     wait(1)
                 end
@@ -8656,6 +8755,7 @@ Tab:AddToggle({
         end
     end
 })
+
 
 local Tab = Window:MakeTab({"Musica", "rbxassetid://111911979482253"})
 
@@ -9721,5 +9821,3 @@ Tab:AddToggle({
         end
     end
 })
-
-Tab:AddParagraph({"Info", "Todos do server ouvem o áudio"})
